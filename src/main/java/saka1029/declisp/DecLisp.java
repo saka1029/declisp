@@ -2,6 +2,7 @@ package saka1029.declisp;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntBinaryOperator;
@@ -47,6 +48,7 @@ public class DecLisp {
     record Nil() implements Expr {}
     public static Expr NIL = new Nil();
     public record Int(int value) implements Expr {}
+    public record Dec(BigDecimal value) implements Expr {}
     public record Bool(boolean value) implements Expr {}
     public static final Bool TRUE = new Bool(true);
     public static final Bool FALSE = new Bool(false);
@@ -69,6 +71,7 @@ public class DecLisp {
             case Symbol s -> s.name;
             case Bool b -> "" + b.value;
             case Int i -> "" + i.value;
+            case Dec d -> d.value.toString();
             case Nil n -> "()";
             case Cons c -> printCons(c);
             default -> throw new RuntimeException("print(): Unknown type " + e);
@@ -84,6 +87,7 @@ public class DecLisp {
             case Symbol s -> get(env, s);
             case Bool b -> b;
             case Int i -> i;
+            case Dec d -> d;
             case Nil n -> n;
             case Cons c -> {
                 Expr head = eval(c.car, env);
@@ -180,6 +184,15 @@ public class DecLisp {
             return ch >= '0' && ch <= '9';
         }
 
+        /**
+         * 開始文字は'+', '-', Digit, '.''
+         * BigDecimalString:
+         *     [ '+' | '-' ] ( Digits [ '.' [ Digits ]] | '.' Digits ) [ ('e'|'E') [ '+' | '-'] Digits ]
+         * Digits: Digit { Digit }
+        */
+        Dec decimal() {
+            return new Dec(BigDecimal.ZERO);
+        }
         Int integer() {
             while (isDigit(ch))
                 get();
