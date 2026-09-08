@@ -422,12 +422,24 @@ public class TestAList {
     @Test 
     public void testCompare() {
         Env env = environment();
+        assertEquals(FALSE, eval(list(s("=="), d(1), d(0)), env));
+        assertEquals(TRUE, eval(list(s("=="), d(0), d(0)), env));
+        assertEquals(FALSE, eval(list(s("=="), d(0), d(1)), env));
+        assertEquals(TRUE, eval(list(s("!="), d(1), d(0)), env));
+        assertEquals(FALSE, eval(list(s("!="), d(0), d(0)), env));
+        assertEquals(TRUE, eval(list(s("!="), d(0), d(1)), env));
+        assertEquals(FALSE, eval(list(s("<"), d(1), d(0)), env));
+        assertEquals(FALSE, eval(list(s("<"), d(0), d(0)), env));
+        assertEquals(TRUE, eval(list(s("<"), d(0), d(1)), env));
         assertEquals(FALSE, eval(list(s("<="), d(1), d(0)), env));
         assertEquals(TRUE, eval(list(s("<="), d(0), d(0)), env));
         assertEquals(TRUE, eval(list(s("<="), d(0), d(1)), env));
         assertEquals(TRUE, eval(list(s(">"), d(1), d(0)), env));
         assertEquals(FALSE, eval(list(s(">"), d(0), d(0)), env));
         assertEquals(FALSE, eval(list(s(">"), d(0), d(1)), env));
+        assertEquals(TRUE, eval(list(s(">="), d(1), d(0)), env));
+        assertEquals(TRUE, eval(list(s(">="), d(0), d(0)), env));
+        assertEquals(FALSE, eval(list(s(">="), d(0), d(1)), env));
     }
 
     @Test 
