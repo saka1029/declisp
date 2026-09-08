@@ -185,7 +185,13 @@ public class DecLisp {
         }
 
         /**
-         * 開始文字は'+', '-', Digit, '.''
+         * 開始文字は
+         * '+' D
+         * '+' '.'
+         * '-' D
+         * '-' '.'
+         * Digit
+         * '.' D
          * BigDecimalString:
          *     [ '+' | '-' ] ( Digits [ '.' [ Digits ]] | '.' Digits ) [ ('e'|'E') [ '+' | '-'] Digits ]
          * Digits: Digit { Digit }
