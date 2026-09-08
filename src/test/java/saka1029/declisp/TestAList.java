@@ -88,7 +88,6 @@ public class TestAList {
     public static Symbol LAMBDA = s("lambda");
     public static List NIL = new List();
     public static List list(Expr... elements) { return new List(elements); }
-    public static Expr[] array(Expr e) { return cast(e, List.class).elements; }
     public static <T> T cast(Expr e, Class<T> c) {
         if (c.isInstance(e))
             return c.cast(e);
@@ -102,12 +101,9 @@ public class TestAList {
         Expr[] es = cast(e, List.class).elements;
         return new List(Arrays.copyOfRange(es, 1, es.length));
     }
-    public static Stream<Expr> stream(Expr e) {
-        return Stream.of(cast(e, List.class).elements);
-    }
-    public static BigDecimal[] darray(Expr e) {
-        return stream(e).map(x->d(x)).toArray(BigDecimal[]::new);
-    }
+    public static Expr[] array(Expr e) { return cast(e, List.class).elements; }
+    public static Stream<Expr> stream(Expr e) { return Stream.of(cast(e, List.class).elements); }
+    public static BigDecimal[] darray(Expr e) { return stream(e).map(x->d(x)).toArray(BigDecimal[]::new); }
     public static List cons(Expr a, Expr b) {
         Expr[] be = cast(b, List.class).elements;
         int blen = be.length;
@@ -320,7 +316,15 @@ public class TestAList {
     public static Env environment() {
         Env env = new Env();
         define(env, QUOTE, (Apply) (a, e) -> car(a));
-        define(env, s("define"), (Apply) (a, e) -> { define(e, s(car(a)), eval(car(cdr(a)), e)); return car(a); });
+        // (define SYMBOL VALUE)
+        // (define (SYMBOL ARGS...) BODY) -> (define SYMBOL (lambda (ARGS...) BODY))
+        define(env, s("define"), (Apply) (a, e) -> {
+            if (car(a) instanceof Symbol s)
+                define(e, s, eval(car(cdr(a)), e));
+            else
+                define(e, s(car(car(a))), eval(cons(LAMBDA, cons(cdr(car(a)), cdr(a))), e));
+            return car(a);
+        });
         define(env, s("if"), (Apply) (a, e) -> {
             Expr[] v = array(a);
             if (b(eval(v[0], e)))
@@ -477,5 +481,14 @@ public class TestAList {
         assertEquals(d(120), eval(read("(fact 5)"), env));
         assertEquals(d(720), eval(read("(fact 6)"), env));
         assertEquals(d(5040), eval(read("(fact 7)"), env));
+    }
+
+    @Test 
+    public void testDefineRead() {
+        Env env = environment();
+        assertEquals(read("V"), eval(read("(define V (- 3 1))"), env));
+        assertEquals(read("2"), eval(read(" V "), env));
+        assertEquals(read("(add x y)"), eval(read("(define (add x y) (+ x y))"), env));
+        assertEquals(read("3"), eval(read("(add 1 V)"), env));
     }
 }
