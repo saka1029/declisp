@@ -48,6 +48,9 @@ public class TestAList {
         @Override public final boolean equals(Object r) {
             return r instanceof Dec d && value.compareTo(d.value) == 0;
         }
+        @Override public final String toString() {
+            return value.toString().replaceFirst("\\.0$", "");
+        }
     }
     public record Symbol(String value) implements Expr {}
     public record List(Expr... elements) implements Expr {
@@ -107,7 +110,7 @@ public class TestAList {
     public static String print(Expr e) {
         return switch (e) {
             case Bool b -> Boolean.toString(b.value);
-            case Dec d -> d.value.toString().replaceFirst("\\.0$", "");
+            case Dec d -> d.toString();
             case Symbol s -> s.value;
             case List l -> Stream.of(l.elements).map(x -> print(x)).collect(joining(" ", "(", ")"));
             default -> Objects.toString(e);
