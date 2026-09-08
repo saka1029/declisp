@@ -278,5 +278,8 @@ public class TestAList {
         assertEquals(d(2), eval(list(s("fact"), d(2)), env));
         assertEquals(d(6), eval(list(s("fact"), d(3)), env));
         assertEquals(d(24), eval(list(s("fact"), d(4)), env));
+        assertEquals(s("F"), eval(list(s("define"), s("F"),
+            list(LAMBDA, list(s("n")), list(s("cons"), s("A"), list(QUOTE, list())))), env));
+        assertEquals(list(d(123)), eval(list(s("F"), d(0)), env));
     }
 }
