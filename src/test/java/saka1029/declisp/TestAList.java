@@ -488,7 +488,8 @@ public class TestAList {
         Env env = environment();
         assertEquals(read("V"), eval(read("(define V (- 3 1))"), env));
         assertEquals(read("2"), eval(read(" V "), env));
-        assertEquals(read("(add x y)"), eval(read("(define (add x y) (+ x y))"), env));
+        // implicit progN
+        assertEquals(read("(add x y)"), eval(read("(define (add x y) 1 2 3 (+ x y))"), env));
         assertEquals(read("3"), eval(read("(add 1 V)"), env));
     }
 }
