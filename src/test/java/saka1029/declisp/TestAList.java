@@ -75,8 +75,10 @@ public class TestAList {
     public static Dec d(BigDecimal v) { return new Dec(v); }
     public static BigDecimal d(Expr e) { return cast(e, Dec.class).value; }
     public static Symbol s(String v) { return new Symbol(v); }
-    public static String s(Expr e) { return cast(e, Symbol.class).value; }
+    public static Symbol s(Expr e) { return cast(e, Symbol.class); }
     public static Symbol QUOTE = s("quote");
+    public static Symbol LAMBDA = s("lambda");
+    public static List NIL = new List();
     public static List list(Expr... elements) { return new List(elements); }
     public static Expr[] array(Expr e) { return cast(e, List.class).elements; }
     public static <T> T cast(Expr e, Class<T> c) {
@@ -122,7 +124,7 @@ public class TestAList {
             case Bool b -> b;
             case Dec d -> d;
             case Symbol s -> get(env, s);
-            case List l -> cast(eval(car(l), env),Apply.class).apply(cdr(l), env);
+            case List l -> cast(eval(car(l), env), Apply.class).apply(cdr(l), env);
             default -> throw new AListException("eval: unknown type %s " + e);
         };
     }
@@ -131,6 +133,18 @@ public class TestAList {
         return new List(stream(list)
             .map(e -> eval(e, env))
             .toArray(Expr[]::new));
+    }
+    public static void pairlis(Expr parms, Expr args, Env e) {
+        Expr[] p = array(parms), a = array(args);
+        for (int i = 0, len = p.length; i < len; ++i)
+            define(e, s(p[i]), a[i]);
+    }
+    public static Expr progn(Expr body, Env e) {
+        Expr r = NIL;
+        Expr[] v = array(body);
+        for (int i = 0, len = v.length; i < len; ++i)
+            r = eval(v[i], e);
+        return r;
     }
     static <T> T arithmetic(T[] args, T start, BinaryOperator<T> operator) {
         T prev = null;
@@ -144,23 +158,27 @@ public class TestAList {
         return start;
     }
 
-    // interface IntBinaryOperator { int apply(int a, int b); }
-    // static Int intArithmetic(Expr args, int start, IntBinaryOperator operator) {
-    //     Expr[] v = array(args);
-    //     int prev = 0;
-    //     for (int i = 0, len = v.length; i < len; ++i) {
-    //         int value = i(v[i]);
-    //         if (i == 1)
-    //             start = prev;
-    //         start = operator.apply(start, value);
-    //         prev = value;
-    //     }
-    //     return i(start);
-    // }
-
     public static Env environment() {
         Env env = new Env();
         define(env, QUOTE, (Apply) (a, e) -> car(a));
+        define(env, s("define"), (Apply) (a, e) -> { define(e, s(car(a)), eval(car(cdr(a)), e)); return car(a); });
+        define(env, s("if"), (Apply) (a, e) -> {
+            Expr[] v = array(a);
+            if (b(eval(v[0], e)))
+                return eval(v[1], e);
+            else if (v.length >=3)
+                return eval(v[2], e);
+            else
+                return NIL;
+        });
+        define(env, LAMBDA, (Apply) (a, e) -> {
+            Expr parms = car(a), body = cdr(a);
+            return (Apply) (aa, ee) -> {
+                Env n = new Env(e);
+                pairlis(parms, evlis(aa, ee), n);
+                return progn(body, n);
+            };
+        });
         define(env, s("car"), (Proc) a -> car(car(a)));
         define(env, s("cdr"), (Proc) a -> cdr(car((a))));
         define(env, s("cons"), (Proc) a -> cons(car(a), car(cdr(a))));
@@ -168,6 +186,12 @@ public class TestAList {
         define(env, s("-"), (Proc) a -> d(arithmetic(darray(a), BigDecimal.ZERO, (x, y) -> x.subtract(y))));
         define(env, s("*"), (Proc) a -> d(arithmetic(darray(a), BigDecimal.ONE, (x, y) -> x.multiply(y))));
         define(env, s("/"), (Proc) a -> d(arithmetic(darray(a), BigDecimal.ONE, (x, y) -> x.divide(y, MathContext.DECIMAL128))));
+        define(env, s("=="), (Proc) a -> b(d(car(a)).compareTo(d(car(cdr(a)))) == 0));
+        define(env, s("!="), (Proc) a -> b(d(car(a)).compareTo(d(car(cdr(a)))) != 0));
+        define(env, s("<"), (Proc) a -> b(d(car(a)).compareTo(d(car(cdr(a)))) < 0));
+        define(env, s("<="), (Proc) a -> b(d(car(a)).compareTo(d(car(cdr(a)))) <= 0));
+        define(env, s(">"), (Proc) a -> b(d(car(a)).compareTo(d(car(cdr(a)))) > 0));
+        define(env, s(">="), (Proc) a -> b(d(car(a)).compareTo(d(car(cdr(a)))) >= 0));
         return env;
     }
 
@@ -205,6 +229,13 @@ public class TestAList {
     }
 
     @Test 
+    public void testIf() {
+        Env env = environment();
+        assertEquals(d(1), eval(list(s("if"), TRUE, d(1), d(0)), env));
+        assertEquals(d(0), eval(list(s("if"), FALSE, d(1), d(0)), env));
+    }
+
+    @Test 
     public void testEval() {
         Env env = environment();
         assertEquals(s("a"), eval(list(QUOTE, s("a")), env));
@@ -219,5 +250,33 @@ public class TestAList {
         assertEquals(d(0.5), eval(list(s("/"), d(2)), env));
         assertEquals(d(2), eval(list(s("/"), d(4), d(2)), env));
         assertEquals(d(4), eval(list(s("/"), d(24), d(2), d(3)), env));
+    }
+
+    @Test 
+    public void testCompare() {
+        Env env = environment();
+        assertEquals(FALSE, eval(list(s("<="), d(1), d(0)), env));
+        assertEquals(TRUE, eval(list(s("<="), d(0), d(0)), env));
+        assertEquals(TRUE, eval(list(s("<="), d(0), d(1)), env));
+        assertEquals(TRUE, eval(list(s(">"), d(1), d(0)), env));
+        assertEquals(FALSE, eval(list(s(">"), d(0), d(0)), env));
+        assertEquals(FALSE, eval(list(s(">"), d(0), d(1)), env));
+    }
+
+    @Test 
+    public void testDefine() {
+        Env env = environment();
+        assertEquals(s("A"), eval(list(s("define"), s("A"), list(s("+"), d(100), d(23))), env));
+        assertEquals(d(123), eval(s("A"), env));
+        assertEquals(s("fact"), eval(list(s("define"), s("fact"),
+            list(LAMBDA, list(s("n")),
+                list(s("if"), list(s("<="), s("n"), d(0)),
+                    d(1),
+                    list(s("*"), s("n"), list(s("fact"), list(s("-"), s("n"), d(1))))))), env));
+        assertEquals(d(1), eval(list(s("fact"), d(0)), env));
+        assertEquals(d(1), eval(list(s("fact"), d(1)), env));
+        assertEquals(d(2), eval(list(s("fact"), d(2)), env));
+        assertEquals(d(6), eval(list(s("fact"), d(3)), env));
+        assertEquals(d(24), eval(list(s("fact"), d(4)), env));
     }
 }
