@@ -4,8 +4,11 @@ import static java.util.stream.Collectors.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.BinaryOperator;
@@ -15,9 +18,8 @@ import org.junit.Test;
 
 public class TestAList {
     public static class AListException extends RuntimeException {
-        public AListException(String format, Object... args) {
-            super(format.formatted(args));
-        }
+        public AListException(String format, Object... args) { super(format.formatted(args)); }
+        public AListException(Throwable cause) { super(cause); }
     }
     public static class KV {
         Symbol k; Expr v; KV prev;
@@ -158,6 +160,139 @@ public class TestAList {
         return start;
     }
 
+    public static class Reader {
+        public static final Expr EOF = new Expr() {};
+
+        final java.io.Reader reader;
+        final StringBuilder buffer = new StringBuilder();
+        int ch;
+
+        public Reader(java.io.Reader reader) {
+            this.reader = reader;
+            this.ch = get();
+        }
+
+        public Reader(String source) {
+            this(new StringReader(source));
+        }
+
+        int get() {
+            try {
+                ch = reader.read();
+                buffer.append((char)ch);    // ch == EOFの時もappendする
+                return ch;
+            } catch (IOException e) {
+                throw new AListException(e);
+            }
+        }
+
+        int getClear() {
+            buffer.setLength(0);
+            return get();
+        }
+
+        void spaces() {
+            while (Character.isWhitespace(ch))
+                get();
+            buffer.delete(0, buffer.length() - 1);
+        }
+
+        Expr list() {
+            getClear();     // skip '('
+            java.util.List<Expr> list = new ArrayList<>();
+            while (true) {
+                spaces();
+                if (ch == ')') {
+                    getClear();  // skip ')'
+                    return new List(list.toArray(Expr[]::new));
+                // } else if (ch == '.') {
+                //     getClear();  // skip '.'
+                //     Expr result = DecLisp.list(read(), list);
+                //     spaces();
+                //     if (ch != ')')
+                //         throw new RuntimeException("Reader.list(): ')' expected");
+                //     getClear();  // skip ')'
+                //     return result;
+                }
+                Expr e = read();
+                if (e == EOF)
+                    throw new AListException("Reader.list(): Unexpected EOF");
+                list.addLast(e);
+            }
+        }
+
+        Expr quote() {
+            getClear();  // skip '\''
+            return new List(QUOTE, read());
+        }
+
+        static boolean isDigit(int ch) {
+            return ch >= '0' && ch <= '9';
+        }
+
+        /**
+         * 開始文字は
+         * '+' D
+         * '+' '.'
+         * '-' D
+         * '-' '.'
+         * Digit
+         * '.' D
+         * BigDecimalString:
+         *     [ '+' | '-' ] ( Digits [ '.' [ Digits ]] | '.' Digits ) [ ('e'|'E') [ '+' | '-'] Digits ]
+         * Digits: Digit { Digit }
+        */
+        Dec decimal() {
+            while (isDigit(ch))
+                get();
+            if (ch == '.') {
+                get();
+                while (isDigit(ch))
+                    get();
+            }
+            return new Dec(new BigDecimal(buffer.substring(0, buffer.length() - 1)));
+        }
+
+        static boolean isSymbolFirst(int ch) {
+            return switch (ch) {
+                case -1, '(', ')', '.' -> false;
+                default -> !Character.isWhitespace(ch) && !isDigit(ch);
+            };
+        }
+
+        static boolean isSymbolRest(int ch) {
+            return isSymbolFirst(ch) || isDigit(ch) || ch == '.';
+        }
+
+        Expr symbol() {
+            while (isSymbolRest(ch))
+                get();
+            String value = buffer.substring(0, buffer.length() - 1);
+            return switch (value) {
+                case "true" -> TRUE;
+                case "false" -> FALSE;
+                default -> new Symbol(value);
+            };
+        }
+
+        public Expr read() {
+            spaces();
+            if (ch == -1)
+                return EOF;
+            else if (ch == '(')
+                return list();
+            else if (ch == '\'')
+                return quote();
+            else if (ch == '-')
+                return isDigit(get()) ? decimal() : new Symbol("-");
+            else if (isDigit(ch))
+                return decimal();
+            else if (isSymbolFirst(ch))
+                return symbol();
+            else 
+                throw new AListException("Reader.read(): Unexpected character '%c'", (char)ch);
+        }
+    }
     public static Env environment() {
         Env env = new Env();
         define(env, QUOTE, (Apply) (a, e) -> car(a));
@@ -281,5 +416,11 @@ public class TestAList {
         assertEquals(s("F"), eval(list(s("define"), s("F"),
             list(LAMBDA, list(s("n")), list(s("cons"), s("A"), list(QUOTE, list())))), env));
         assertEquals(list(d(123)), eval(list(s("F"), d(0)), env));
+    }
+
+    @Test 
+    public void testRead() {
+        assertEquals(list(s("a"), d(1)), new Reader("(a 1)").read());
+        assertEquals(list(s("quote"), s("a")), new Reader("'a").read());
     }
 }
