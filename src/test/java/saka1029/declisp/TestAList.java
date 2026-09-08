@@ -68,6 +68,12 @@ public class TestAList {
             return apply(evlis(args, env));
         }
     }
+    public interface ProcArray extends Proc {
+        Expr apply(Expr[] evaled);
+        default Expr apply(Expr evaled) {
+            return apply(array(evaled));
+        }
+    }
 
     public static final Bool TRUE = new Bool(true);
     public static final Bool FALSE = new Bool(false);
@@ -111,12 +117,20 @@ public class TestAList {
         return new List(r);
     }
 
+    public static String printList(List list) {
+        Expr[] v = array(list);
+        if (v.length == 2 && v[0].equals(QUOTE))
+            return "'" + print(v[1]);
+        return Stream.of(list.elements)
+            .map(x -> print(x)).collect(joining(" ", "(", ")"));
+    }
+
     public static String print(Expr e) {
         return switch (e) {
             case Bool b -> Boolean.toString(b.value);
             case Dec d -> d.toString();
             case Symbol s -> s.value;
-            case List l -> Stream.of(l.elements).map(x -> print(x)).collect(joining(" ", "(", ")"));
+            case List l -> printList(l);
             default -> Objects.toString(e);
         };
     }
@@ -129,35 +143,6 @@ public class TestAList {
             case List l -> cast(eval(car(l), env), Apply.class).apply(cdr(l), env);
             default -> throw new AListException("eval: unknown type %s " + e);
         };
-    }
-
-    public static Expr evlis(Expr list, Env env) {
-        return new List(stream(list)
-            .map(e -> eval(e, env))
-            .toArray(Expr[]::new));
-    }
-    public static void pairlis(Expr parms, Expr args, Env e) {
-        Expr[] p = array(parms), a = array(args);
-        for (int i = 0, len = p.length; i < len; ++i)
-            define(e, s(p[i]), a[i]);
-    }
-    public static Expr progn(Expr body, Env e) {
-        Expr r = NIL;
-        Expr[] v = array(body);
-        for (int i = 0, len = v.length; i < len; ++i)
-            r = eval(v[i], e);
-        return r;
-    }
-    static <T> T arithmetic(T[] args, T start, BinaryOperator<T> operator) {
-        T prev = null;
-        for (int i = 0, len = args.length; i < len; ++i) {
-            T value = args[i];
-            if (i == 1)
-                start = prev;
-            start = operator.apply(start, value);
-            prev = value;
-        }
-        return start;
     }
 
     public static class Reader {
@@ -205,6 +190,7 @@ public class TestAList {
                 if (ch == ')') {
                     getClear();  // skip ')'
                     return new List(list.toArray(Expr[]::new));
+                // no DOT notation
                 // } else if (ch == '.') {
                 //     getClear();  // skip '.'
                 //     Expr result = DecLisp.list(read(), list);
@@ -245,8 +231,14 @@ public class TestAList {
         Dec decimal() {
             while (isDigit(ch))
                 get();
-            if (ch == '.') {
+            if (ch == '.')
+                do {
+                    get();
+                } while (isDigit(ch));
+            if (ch == 'E' || ch == 'e') {
                 get();
+                if (ch == '-' || ch == '+')
+                    get();
                 while (isDigit(ch))
                     get();
             }
@@ -255,13 +247,13 @@ public class TestAList {
 
         static boolean isSymbolFirst(int ch) {
             return switch (ch) {
-                case -1, '(', ')', '.' -> false;
+                case -1, '(', ')' -> false;
                 default -> !Character.isWhitespace(ch) && !isDigit(ch);
             };
         }
 
         static boolean isSymbolRest(int ch) {
-            return isSymbolFirst(ch) || isDigit(ch) || ch == '.';
+            return isSymbolFirst(ch) || isDigit(ch);
         }
 
         Expr symbol() {
@@ -283,6 +275,8 @@ public class TestAList {
                 return list();
             else if (ch == '\'')
                 return quote();
+            else if (ch == '+')
+                return isDigit(get()) ? decimal() : new Symbol("+");
             else if (ch == '-')
                 return isDigit(get()) ? decimal() : new Symbol("-");
             else if (isDigit(ch))
@@ -293,6 +287,36 @@ public class TestAList {
                 throw new AListException("Reader.read(): Unexpected character '%c'", (char)ch);
         }
     }
+
+    public static Expr evlis(Expr list, Env env) {
+        return new List(stream(list)
+            .map(e -> eval(e, env))
+            .toArray(Expr[]::new));
+    }
+    public static void pairlis(Expr parms, Expr args, Env e) {
+        Expr[] p = array(parms), a = array(args);
+        for (int i = 0, len = p.length; i < len; ++i)
+            define(e, s(p[i]), a[i]);
+    }
+    public static Expr progn(Expr body, Env e) {
+        Expr r = NIL;
+        Expr[] v = array(body);
+        for (int i = 0, len = v.length; i < len; ++i)
+            r = eval(v[i], e);
+        return r;
+    }
+    static <T> T arithmetic(T[] args, T start, BinaryOperator<T> operator) {
+        T prev = null;
+        for (int i = 0, len = args.length; i < len; ++i) {
+            T value = args[i];
+            if (i == 1)
+                start = prev;
+            start = operator.apply(start, value);
+            prev = value;
+        }
+        return start;
+    }
+
     public static Env environment() {
         Env env = new Env();
         define(env, QUOTE, (Apply) (a, e) -> car(a));
@@ -314,19 +338,20 @@ public class TestAList {
                 return progn(body, n);
             };
         });
-        define(env, s("car"), (Proc) a -> car(car(a)));
-        define(env, s("cdr"), (Proc) a -> cdr(car((a))));
-        define(env, s("cons"), (Proc) a -> cons(car(a), car(cdr(a))));
+        define(env, s("car"), (ProcArray) a -> car(a[0]));
+        define(env, s("cdr"), (ProcArray) a -> cdr(a[0]));
+        define(env, s("cons"), (ProcArray) a -> cons(a[0], a[1]));
+        define(env, s("list"), (Proc) a -> a);
         define(env, s("+"), (Proc) a -> d(arithmetic(darray(a), BigDecimal.ZERO, (x, y) -> x.add(y))));
         define(env, s("-"), (Proc) a -> d(arithmetic(darray(a), BigDecimal.ZERO, (x, y) -> x.subtract(y))));
         define(env, s("*"), (Proc) a -> d(arithmetic(darray(a), BigDecimal.ONE, (x, y) -> x.multiply(y))));
         define(env, s("/"), (Proc) a -> d(arithmetic(darray(a), BigDecimal.ONE, (x, y) -> x.divide(y, MathContext.DECIMAL128))));
-        define(env, s("=="), (Proc) a -> b(d(car(a)).compareTo(d(car(cdr(a)))) == 0));
-        define(env, s("!="), (Proc) a -> b(d(car(a)).compareTo(d(car(cdr(a)))) != 0));
-        define(env, s("<"), (Proc) a -> b(d(car(a)).compareTo(d(car(cdr(a)))) < 0));
-        define(env, s("<="), (Proc) a -> b(d(car(a)).compareTo(d(car(cdr(a)))) <= 0));
-        define(env, s(">"), (Proc) a -> b(d(car(a)).compareTo(d(car(cdr(a)))) > 0));
-        define(env, s(">="), (Proc) a -> b(d(car(a)).compareTo(d(car(cdr(a)))) >= 0));
+        define(env, s("=="), (ProcArray) a -> b(d(a[0]).compareTo(d(a[1])) == 0));
+        define(env, s("!="), (ProcArray) a -> b(d(a[0]).compareTo(d(a[1])) != 0));
+        define(env, s("<"), (ProcArray) a -> b(d(a[0]).compareTo(d(a[1])) < 0));
+        define(env, s("<="), (ProcArray) a -> b(d(a[0]).compareTo(d(a[1])) <= 0));
+        define(env, s(">"), (ProcArray) a -> b(d(a[0]).compareTo(d(a[1])) > 0));
+        define(env, s(">="), (ProcArray) a -> b(d(a[0]).compareTo(d(a[1])) >= 0));
         return env;
     }
 
@@ -361,6 +386,8 @@ public class TestAList {
         assertEquals("abc", print(s("abc")));
         assertEquals("(+ 1 2)", print(list(s("+"), d(1), d(2))));
         assertEquals("(1 (true false) 2)", print(list(d(1), list(TRUE, FALSE), d(2))));
+        assertEquals("'abc", print(list(QUOTE, s("abc"))));
+        assertEquals("'(1 2)", print(list(QUOTE, list(d(1), d(2)))));
     }
 
     @Test 
@@ -375,12 +402,13 @@ public class TestAList {
         Env env = environment();
         assertEquals(s("a"), eval(list(QUOTE, s("a")), env));
         assertEquals(s("a"), eval(list(s("car"), list(QUOTE, list(s("a"), s("b")))), env));
+        assertEquals(list(d(0), d(1), d(2)), eval(list(s("list"), d(0), d(1), d(2)), env));
         assertEquals(list(s("b")), eval(list(s("cdr"), list(QUOTE, list(s("a"), s("b")))), env));
         assertEquals(list(d(1), d(2), d(3)), eval(list(s("cons"), d(1), list(QUOTE, list(d(2), d(3)))), env));
         assertEquals(d(0), eval(list(s("+")), env));
         assertEquals(d(2), eval(list(s("+"), d(2)), env));
         assertEquals(d(3), eval(list(s("+"), d(1), d(2)), env));
-        assertEquals(d(6), eval(list(s("+"), d(1), d(2), d(3)), env));
+        assertEquals(d(10), eval(list(s("+"), d(1), list(s("+"), d(2), d(3)), d(4)), env));
         assertEquals(d(1), eval(list(s("/")), env));
         assertEquals(d(0.5), eval(list(s("/"), d(2)), env));
         assertEquals(d(2), eval(list(s("/"), d(4), d(2)), env));
@@ -418,9 +446,36 @@ public class TestAList {
         assertEquals(list(d(123)), eval(list(s("F"), d(0)), env));
     }
 
+    static Expr read(String s) {
+        return new Reader(s).read();
+    }
+
     @Test 
     public void testRead() {
-        assertEquals(list(s("a"), d(1)), new Reader("(a 1)").read());
-        assertEquals(list(s("quote"), s("a")), new Reader("'a").read());
+        Env env = environment();
+        assertEquals(d(12), read("12"));
+        assertEquals(d(12.34), read("12.34"));
+        assertEquals(d(12000), read("12e+3"));
+        assertEquals(d(12000), read("12e3"));
+        assertEquals(d(0.1234), read("12.34E-2"));
+        assertEquals(list(s("a"), d(1)), read("(a 1)"));
+        assertEquals(list(s("a"), s("."), d(1)), read("(a . 1)"));
+        assertEquals(list(s("a.1")), read("(a.1)"));
+        assertEquals(list(s("quote"), s("a")), read("'a"));
+        assertEquals("'a", print(read("'a")));
+        assertEquals(s("fact"), eval(read("""
+            (define fact (lambda (n)
+                (if (<= n 0)
+                    1
+                    (* n (fact (- n 1))))))
+            """), env));
+        assertEquals(d(1), eval(read("(fact 0)"), env));
+        assertEquals(d(1), eval(read("(fact 1)"), env));
+        assertEquals(d(2), eval(read("(fact 2)"), env));
+        assertEquals(d(6), eval(read("(fact 3)"), env));
+        assertEquals(d(24), eval(read("(fact 4)"), env));
+        assertEquals(d(120), eval(read("(fact 5)"), env));
+        assertEquals(d(720), eval(read("(fact 6)"), env));
+        assertEquals(d(5040), eval(read("(fact 7)"), env));
     }
 }
