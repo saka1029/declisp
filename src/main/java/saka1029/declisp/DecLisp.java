@@ -306,7 +306,7 @@ public class DecLisp {
         return result;
     }
 
-    public static Expr add(Expr evaled, BigDecimal unit, BinaryOperator<BigDecimal> op) {
+    public static Expr arithmet(Expr evaled, BigDecimal unit, BinaryOperator<BigDecimal> op) {
         List<List<BigDecimal>> mat = new ArrayList<>();
         int maxRowSize = 0;
         for (Expr e = evaled; e instanceof Cons c; e = c.cdr) {
@@ -322,13 +322,21 @@ public class DecLisp {
         }
         // System.out.println(maxRowSize);
         BigDecimal[] result = new BigDecimal[maxRowSize];
+        BigDecimal[] prev = new BigDecimal[mat.size()];
         Arrays.fill(result, unit);
         for (int r = 0, rmax = mat.size(); r < rmax; ++r) {
             for (int c = 0; c < maxRowSize; ++c) {
                 BigDecimal adder = mat.get(r).get(c >= mat.get(r).size() ? 0 : c);
+                if (c == 1) {
+                    System.out.println(result[c] + "->" + prev[r]);
+                    result[c] = prev[r];
+                }
                 result[c] = op.apply(result[c], adder);
+                prev[r] = adder;
             }
         }
+        if (maxRowSize == 1)
+            return d(result[0]);
         Expr r = NIL;
         for (int i = maxRowSize - 1; i >= 0; --i)
             r = cons(d(result[i]), r);
@@ -412,8 +420,10 @@ public class DecLisp {
         define(env, sym("cdr"), (Proc) a -> cdr(car(a)));
         define(env, sym("cons"), (Proc) a -> cons(car(a), car(cdr(a))));
         define(env, sym("not"), (Proc) a -> car(a).equals(FALSE) ? TRUE : FALSE);
-        define(env, sym("+"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.add(y)));
-        define(env, sym("-"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.subtract(y)));
+        // define(env, sym("+"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.add(y)));
+        define(env, sym("+"), (Proc) a -> arithmet(a, BigDecimal.ZERO, (x, y) -> x.add(y)));
+        // define(env, sym("-"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.subtract(y)));
+        define(env, sym("-"), (Proc) a -> arithmet(a, BigDecimal.ZERO, (x, y) -> x.subtract(y)));
         define(env, sym("*"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.multiply(y)));
         define(env, sym("/"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.divide(y, MathContext.DECIMAL128)));
         define(env, sym("=="), (Proc) a -> compare(a, x -> x == 0));
@@ -422,7 +432,6 @@ public class DecLisp {
         define(env, sym("<="), (Proc) a -> compare(a, x -> x <= 0));
         define(env, sym(">"), (Proc) a -> compare(a, x -> x > 0));
         define(env, sym(">="), (Proc) a -> compare(a, x -> x >= 0));
-        define(env, sym("add"), (Proc) a -> add(a, BigDecimal.ZERO, (x, y) -> x.add(y)));
         return env;
     }
 }
