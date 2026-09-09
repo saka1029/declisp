@@ -249,6 +249,7 @@ public class TestDeclisp {
         assertEquals(read("(9 10 11)"), evalRead("(+ (1 2 3) 8)) ", env));
         assertEquals(read("(9 10 11)"), evalRead("(+ 8 (1 2 3))) ", env));
         assertEquals(read("(0.2 0.1 0.05)"), evalRead("(/ (5 10 20))) ", env));
+        assertEquals(read("(2.5 5 10)"), evalRead("(/ (5 10 20) 2)) ", env));
         assertEquals(read("(16 18 20)"), evalRead("(+ (1 2 3) (4) 5 (6 (- 10 3) 8)) ", env));
     }
 
