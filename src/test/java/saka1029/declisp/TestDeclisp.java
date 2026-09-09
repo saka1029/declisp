@@ -121,6 +121,7 @@ public class TestDeclisp {
         assertEquals(d(1234), read("12.34E2"));
         assertEquals(d(0.1234), read("12.34e-2"));
         assertEquals(d(1234), read("12.34e+2"));
+        assertEquals(sym("😀"), read("😀"));
     }
 
     @Test 
