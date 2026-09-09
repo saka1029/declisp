@@ -1,6 +1,7 @@
 package saka1029.declisp;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 import static saka1029.declisp.DecLisp.*;
 
@@ -31,6 +32,12 @@ public class TestDeclisp {
     }
 
     @Test 
+    public void testDec() {
+        assertEquals(d(2), d(2.0));
+        assertNotEquals(d(2), d(2.3));
+    }
+
+    @Test 
     public void testEnv() {
         Env env = new Env();
         define(env, sym("A"), d(3));
@@ -53,6 +60,7 @@ public class TestDeclisp {
     public void testEval() {
         Env env = new Env();
         define(env, sym("a"), d(3));
+        assertEquals(list(), eval(NIL, env));
         assertEquals(d(3), eval(sym("a"), env));
         assertEquals(d(3), eval(d(3), env));
         assertEquals(TRUE, eval(TRUE, env));
@@ -62,6 +70,18 @@ public class TestDeclisp {
             return d(d(car(evaled)).add(d(car(cdr(evaled)))));
         });
         assertEquals(d(3), eval(list(sym("+"), d(1), d(2)), env));
+        try {
+            eval(list(sym("a"), d(1)), env);
+            fail();
+        } catch (DecLispException x) {
+            assertEquals("eval(): Cannot apply '3' to '(1)'", x.getMessage());
+        }
+        try {
+            eval(new Expr(){@Override public String toString() { return "UNKNOWN"; }}, env);
+            fail();
+        } catch (DecLispException x) {
+            assertEquals("eval(): Unknown type 'Unknown type 'UNKNOWN''", x.getMessage());
+        }
     }
 
     static Expr read(String s) { return new Reader(s).read(); }
@@ -79,6 +99,9 @@ public class TestDeclisp {
         assertEquals("SYM", print(sym("SYM")));
         assertEquals("3", print(d(3)));
         assertEquals("()", print(NIL));
+        assertEquals("'(1)", print(list(QUOTE, list(d(1)))));
+        assertEquals("'a", print(list(QUOTE, sym("a"))));
+        assertEquals("(quote)", print(list(QUOTE)));
     }
 
     @Test
@@ -91,12 +114,7 @@ public class TestDeclisp {
         } catch (DecLispException x) {
             assertEquals("cons: cannot cons '1' and '2'", x.getMessage());
         }
-        try {
-            assertEquals("UNKNOWN", print(new Expr(){@Override public String toString() { return "UNKNOWN"; }}));
-            fail();
-        } catch (DecLispException x) {
-            assertEquals("print(): Unknown type 'UNKNOWN'", x.getMessage());
-        }
+        assertEquals("Unknown type 'UNKNOWN'", print(new Expr(){@Override public String toString() { return "UNKNOWN"; }}));
     }
 
     static Expr evalRead(String s, Env e) { return eval(read(s), e); }

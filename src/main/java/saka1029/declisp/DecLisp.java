@@ -87,14 +87,14 @@ public class DecLisp {
 
     static String printCons(Cons cons) {
         StringBuilder sb = new StringBuilder();
-        if (cons.cdr instanceof Cons cdr && cons.car.equals(QUOTE) && cdr.cdr.equals(NIL))
+        if (cons.cdr instanceof Cons cdr && cons.car.equals(QUOTE)) // && cdr.cdr.equals(NIL))
             return sb.append("'").append(print(cdr.car)).toString();
         sb.append("(").append(print(cons.car));
         Expr e;
         for (e = cons.cdr; e instanceof Cons c; e = c.cdr)
             sb.append(" ").append(print(c.car));
-        if (!e.equals(NIL))
-            sb.append(" . ").append(print(e));
+        // if (!e.equals(NIL))
+        //     sb.append(" . ").append(print(e));
         return sb.append(")").toString();
     }
 
@@ -106,7 +106,7 @@ public class DecLisp {
             case Dec d -> d.value.toString().replaceFirst("\\.0$", "");
             case Nil n -> "()";
             case Cons c -> printCons(c);
-            default -> throw new DecLispException("print(): Unknown type '%s'", e);
+            default -> "Unknown type '%s'".formatted(e);
         };
     }
 
