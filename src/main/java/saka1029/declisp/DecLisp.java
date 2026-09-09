@@ -322,17 +322,26 @@ public class DecLisp {
         }
         // System.out.println(maxRowSize);
         BigDecimal[] result = new BigDecimal[maxRowSize];
-        BigDecimal[] prev = new BigDecimal[maxRowSize];
+        BigDecimal prev = null;
         Arrays.fill(result, unit);
-        for (int r = 0, rmax = mat.size(); r < rmax; ++r) {
-            for (int c = 0; c < maxRowSize; ++c) {
+        for (int c = 0; c < maxRowSize; ++c) {
+            for (int r = 0, rmax = mat.size(); r < rmax; ++r) {
                 BigDecimal adder = mat.get(r).get(c >= mat.get(r).size() ? 0 : c);
                 if (r == 1)
-                    result[c] = prev[c];
+                    result[c] = prev;
                 result[c] = op.apply(result[c], adder);
-                prev[c] = adder;
+                prev = adder;
             }
         }
+        // for (int r = 0, rmax = mat.size(); r < rmax; ++r) {
+        //     for (int c = 0; c < maxRowSize; ++c) {
+        //         BigDecimal adder = mat.get(r).get(c >= mat.get(r).size() ? 0 : c);
+        //         if (r == 1)
+        //             result[c] = prev[c];
+        //         result[c] = op.apply(result[c], adder);
+        //         prev[c] = adder;
+        //     }
+        // }
         if (maxRowSize == 1)
             return d(result[0]);
         Expr r = NIL;
