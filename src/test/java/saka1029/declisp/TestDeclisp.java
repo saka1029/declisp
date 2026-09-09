@@ -9,6 +9,14 @@ import java.io.IOException;
 
 import org.junit.Test;
 
+import saka1029.declisp.DecLisp.Apply;
+import saka1029.declisp.DecLisp.Dec;
+import saka1029.declisp.DecLisp.DecLispException;
+import saka1029.declisp.DecLisp.Env;
+import saka1029.declisp.DecLisp.Expr;
+import saka1029.declisp.DecLisp.Reader;
+import saka1029.declisp.DecLisp.Symbol;
+
 /**
  * (1) Listでドット記法は許さない。
  * (2) Consセルはイミュータブルである。
@@ -121,6 +129,7 @@ public class TestDeclisp {
         assertEquals(d(1234), read("12.34E2"));
         assertEquals(d(0.1234), read("12.34e-2"));
         assertEquals(d(1234), read("12.34e+2"));
+        assertEquals(sym(","), read(","));
         assertEquals(sym("😀"), read("😀"));
     }
 
@@ -232,7 +241,12 @@ public class TestDeclisp {
         assertEquals(TRUE, evalRead("(>= 1 0)", env));
         assertEquals(TRUE, evalRead("(>= 0 0)", env));
         assertEquals(FALSE, evalRead("(>= 0 1)", env));
+    }
 
+    @Test 
+    public void testAdd() {
+        Env env = defaultEnv();
+        evalRead("(add (1 2 3) (4) 5 (6 (- 10 3) 8)) ", env);
     }
 
 }

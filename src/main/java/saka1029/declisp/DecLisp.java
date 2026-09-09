@@ -5,6 +5,7 @@ import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.BinaryOperator;
 import java.util.function.IntPredicate;
@@ -126,6 +127,8 @@ public class DecLisp {
                 Expr head = eval(c.car, env);
                 if (head instanceof Apply app)
                     yield app.apply(c.cdr, env);
+                else if (head instanceof Dec)   // リストの先頭が数字ならevlisする
+                    yield cons(head, evlis(c.cdr, env));
                 else
                     throw new DecLispException("eval(): Cannot apply '%s' to '%s'", print(head), print(c.cdr));
             }
@@ -288,16 +291,49 @@ public class DecLisp {
     public static Symbol sym(Expr e) { return (Symbol)e;}
     public static Expr car(Expr e) { return cast(e, Cons.class).car; }
     public static Expr cdr(Expr e) { return cast(e, Cons.class).cdr; }
-    // public static Int i(int value) { return new Int(value);}
-    // public static int i(Expr e) { return ((Int)e).value();}
     public static boolean b(Expr e) { return cast(e, Bool.class).value();}
     public static Bool b(boolean b) { return b ? TRUE : FALSE; }
     public static BigDecimal d(Expr e) { return cast(e, Dec.class).value; }
     public static Dec d(BigDecimal v) { return new Dec(v); }
     public static Dec d(double v) { return new Dec(BigDecimal.valueOf(v)); }
 
-    public interface IntBinaryPredicate {
-        boolean test(int a, int b);
+    public static List<BigDecimal> asList(Expr e) {
+        List<BigDecimal> result = new ArrayList<>();
+        for (; e instanceof Cons c; e = c.cdr)
+            result.add(d(c.car));
+        if (result.isEmpty())
+            result.add(d(e));
+        return result;
+    }
+
+    public static Expr add(Expr evaled, BigDecimal unit, BinaryOperator<BigDecimal> op) {
+        List<List<BigDecimal>> mat = new ArrayList<>();
+        int maxRowSize = 0;
+        for (Expr e = evaled; e instanceof Cons c; e = c.cdr) {
+            List<BigDecimal> row = new ArrayList<>();
+            for (Expr f = c.car; f instanceof Cons d; f = d.cdr) {
+                row.add(d(d.car));
+            }
+            if (row.isEmpty())
+                row.add(d(c.car));
+            System.out.println(row);
+            maxRowSize = Math.max(maxRowSize, row.size());
+            mat.add(row);
+        }
+        // System.out.println(maxRowSize);
+        BigDecimal[] result = new BigDecimal[maxRowSize];
+        Arrays.fill(result, unit);
+        for (int r = 0, rmax = mat.size(); r < rmax; ++r) {
+            for (int c = 0; c < maxRowSize; ++c) {
+                BigDecimal adder = mat.get(r).get(c >= mat.get(r).size() ? 0 : c);
+                result[c] = op.apply(result[c], adder);
+            }
+        }
+        Expr r = NIL;
+        for (int i = maxRowSize - 1; i >= 0; --i)
+            r = cons(d(result[i]), r);
+        System.out.println("r=" + print(r));
+        return r;
     }
 
     static Dec arithmetic(Expr args, BigDecimal start, BinaryOperator<BigDecimal> operator) {
@@ -317,9 +353,6 @@ public class DecLisp {
     static Bool compare(Expr args, IntPredicate predicate) {
         return b(predicate.test(d(car(args)).compareTo(d(car(cdr(args))))));
     }
-    // static Bool compare(Expr args, BiPredicate<BigDecimal, BigDecimal> operator) {
-    //     return operator.test(d(car(args)), d(car(cdr(args)))) ? TRUE : FALSE;
-    // }
 
     public static Expr evlis(Expr args, Env env) {
         List<Expr> list = new ArrayList<>();
@@ -389,6 +422,7 @@ public class DecLisp {
         define(env, sym("<="), (Proc) a -> compare(a, x -> x <= 0));
         define(env, sym(">"), (Proc) a -> compare(a, x -> x > 0));
         define(env, sym(">="), (Proc) a -> compare(a, x -> x >= 0));
+        define(env, sym("add"), (Proc) a -> add(a, BigDecimal.ZERO, (x, y) -> x.add(y)));
         return env;
     }
 }
