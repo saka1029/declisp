@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static saka1029.declisp.DecLisp.*;
 
+import java.io.IOException;
+
 import org.junit.Test;
 
 /**
@@ -11,6 +13,41 @@ import org.junit.Test;
  * (2) Consセルはイミュータブルである。
  */
 public class TestDeclisp {
+
+    @Test 
+    public void testDecLispException() {
+        assertEquals(IOException.class, new DecLispException(new IOException()).getCause().getClass());
+    }
+
+    @Test 
+    public void testCast() {
+        Expr e = d(8);
+        assertEquals(Dec.class, cast(e, Dec.class).getClass());
+        try {
+            cast(e, Symbol.class);
+            fail();
+        } catch (DecLispException x) {
+        }
+    }
+
+    @Test 
+    public void testEnv() {
+        Env env = new Env();
+        define(env, sym("A"), d(3));
+        assertEquals(d(3), get(env, sym("A")));
+        set(env, sym("A"), d(7));
+        assertEquals(d(7), get(env, sym("A")));
+        try {
+            assertEquals(d(3), get(env, sym("F")));
+            fail();
+        } catch (DecLispException x) {
+        }
+        try {
+            set(env, sym("F"), d(999));
+            fail();
+        } catch (DecLispException x) {
+        }
+    }
 
     @Test
     public void testEval() {
@@ -42,7 +79,18 @@ public class TestDeclisp {
         assertEquals("SYM", print(sym("SYM")));
         assertEquals("3", print(d(3)));
         assertEquals("()", print(NIL));
-        assertEquals("(1 3)", print(list(d(1), d(3))));
+    }
+
+    @Test
+    public void testCons() {
+        assertEquals("(1)", print(cons(d(1), NIL)));
+        assertEquals("(1 2)", print(cons(d(1), cons(d(2), NIL))));
+        try {
+            print(cons(d(1), d(2)));
+            fail();
+        } catch (DecLispException x) {
+            assertEquals("cons: cannot cons '1' and '2'", x.getMessage());
+        }
         try {
             assertEquals("UNKNOWN", print(new Expr(){@Override public String toString() { return "UNKNOWN"; }}));
             fail();
