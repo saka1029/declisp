@@ -75,7 +75,6 @@ public class DecLisp {
     }
     public static class Nil implements Expr { private Nil() {} }
     public static Expr NIL = new Nil();
-    // public record Int(int value) implements Expr {}
     public record Dec(BigDecimal value) implements Expr {
         @Override public final boolean equals(Object r) {
             return r instanceof Dec d && value.compareTo(d.value) == 0;
@@ -93,8 +92,6 @@ public class DecLisp {
         Expr e;
         for (e = cons.cdr; e instanceof Cons c; e = c.cdr)
             sb.append(" ").append(print(c.car));
-        // if (!e.equals(NIL))
-        //     sb.append(" . ").append(print(e));
         return sb.append(")").toString();
     }
 
@@ -102,7 +99,6 @@ public class DecLisp {
         return switch (e) {
             case Symbol s -> s.name;
             case Bool b -> "" + b.value;
-            // case Int i -> "" + i.value;
             case Dec d -> d.value.toString().replaceFirst("\\.0$", "");
             case Nil n -> "()";
             case Cons c -> printCons(c);
@@ -124,7 +120,6 @@ public class DecLisp {
         return switch (e) {
             case Symbol s -> get(env, s);
             case Bool b -> b;
-            // case Int i -> i;
             case Dec d -> d;
             case Nil n -> n;
             case Cons c -> {
@@ -198,14 +193,6 @@ public class DecLisp {
                     getClear();  // skip ')'
                     return DecLisp.list(NIL, list);
                 // no dot pair
-                // } else if (ch == '.') {
-                //     getClear();  // skip '.'
-                //     Expr result = DecLisp.list(read(), list);
-                //     spaces();
-                //     if (ch != ')')
-                //         throw new DecLispException("Reader.list(): ')' expected");
-                //     getClear();  // skip ')'
-                //     return result;
                 }
                 Expr e = read();
                 if (e == EOF)
@@ -252,12 +239,6 @@ public class DecLisp {
             }
             return new Dec(new BigDecimal(buffer.substring(0, buffer.length() - 1)));
         }
-
-        // Int integer() {
-        //     while (isDigit(ch))
-        //         get();
-        //     return new Int(Integer.parseInt(buffer.substring(0, buffer.length() - 1)));
-        // }
 
         static boolean isSymbolFirst(int ch) {
             return switch (ch) {
@@ -332,19 +313,6 @@ public class DecLisp {
         }
         return d(start);
     }
-
-    // static Int arithmetic(Expr args, int start, IntBinaryOperator operator) {
-    //     int count = 0, prev = 0;
-    //     for (Expr a = args; a instanceof Cons c; a = c.cdr) {
-    //         int value = i(c.car);
-    //         if (count == 1)
-    //             start = prev;
-    //         start = operator.applyAsInt(start, value);
-    //         count++;
-    //         prev = value;
-    //     }
-    //     return i(start);
-    // }
 
     static Bool compare(Expr args, IntPredicate predicate) {
         return b(predicate.test(d(car(args)).compareTo(d(car(cdr(args))))));

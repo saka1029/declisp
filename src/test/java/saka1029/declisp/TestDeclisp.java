@@ -57,6 +57,29 @@ public class TestDeclisp {
     }
 
     @Test
+    public void testReader() {
+        java.io.Reader r = new java.io.Reader() {
+            @Override public void close() throws IOException { }
+            @Override public int read(char[] cbuf, int off, int len) throws IOException {
+                throw new IOException();
+            }
+        };
+        try {
+            Reader reader = new Reader(r);
+            reader.read();
+            fail();
+        } catch (DecLispException x) {
+            assertEquals(IOException.class, x.getCause().getClass());
+        }
+        try {
+            read("(a b");
+            fail();
+        } catch (DecLispException x) {
+            assertEquals("Reader.list(): Unexpected EOF", x.getMessage());
+        }
+    }
+
+    @Test
     public void testEval() {
         Env env = new Env();
         define(env, sym("a"), d(3));
@@ -88,8 +111,16 @@ public class TestDeclisp {
 
     @Test
     public void testRead() {
+        assertEquals(d(1), read("+1"));
+        assertEquals(d(-1), read("-1"));
         assertEquals(list(d(1), sym("a")), read("(1 a)"));
         assertEquals(list(d(1), sym("."), sym("a")), read("(1 . a)"));
+        assertEquals(sym("AB"), read("AB"));
+        assertEquals(d(12.34), read("12.34"));
+        assertEquals(d(1234), read("12.34e2"));
+        assertEquals(d(1234), read("12.34E2"));
+        assertEquals(d(0.1234), read("12.34e-2"));
+        assertEquals(d(1234), read("12.34e+2"));
     }
 
     @Test 
@@ -122,6 +153,8 @@ public class TestDeclisp {
     @Test
     public void evalRead() {
         Env env = defaultEnv();
+        assertEquals(d(2), evalRead("(if false 1 2)", env));
+        assertEquals(NIL, evalRead("(if false 1)", env));
         assertEquals(d(1), evalRead("(car '(1 a))", env));
         assertEquals(list(sym("."), sym("a")), evalRead("(cdr '(1 . a))", env));
         assertEquals(list(d(1), d(2)), evalRead("(cons 1 '(2))", env));
