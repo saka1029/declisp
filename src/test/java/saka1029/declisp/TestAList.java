@@ -104,17 +104,6 @@ public class TestAList {
     public static Expr[] array(Expr e) { return cast(e, List.class).elements; }
     public static Stream<Expr> stream(Expr e) { return Stream.of(cast(e, List.class).elements); }
     public static BigDecimal[] darray(Expr e) { return stream(e).map(x->d(x)).toArray(BigDecimal[]::new); }
-    // public static List append(Expr[]... es) {
-    //     int size = Stream.of(es).mapToInt(e->e.length).sum();
-    //     Expr[] r = new Expr[size];
-    //     int start = 0;
-    //     for (Expr[] e : es) {
-    //         int len = e.length;
-    //         System.arraycopy(e, 0, r, start, len);
-    //         start += len;
-    //     }
-    //     return new List(r);
-    // }
     public static List cons(Expr a, Expr b) {
         Expr[] be = cast(b, List.class).elements;
         int blen = be.length;

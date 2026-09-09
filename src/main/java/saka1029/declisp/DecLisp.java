@@ -3,13 +3,24 @@ package saka1029.declisp;
 import java.io.IOException;
 import java.io.StringReader;
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.IntBinaryOperator;
+import java.util.function.BinaryOperator;
+import java.util.function.IntPredicate;
 
 public class DecLisp {
 
     private DecLisp(){}
+
+    public static class DecLispException extends RuntimeException {
+        public DecLispException(String format, Object... args) {
+            super(format.formatted(args));
+        }
+        public DecLispException(Throwable cause) {
+            super(cause);
+        }
+    }
 
     public interface Expr{}
 
@@ -35,20 +46,41 @@ public class DecLisp {
         for (KeyValue kv = env.kv; kv != null; kv = kv.prev)
             if (kv.key.equals(key))
                 return kv.value;
-        throw new RuntimeException("get(): Not found " + key);
+        throw new DecLispException("get(): Not found %s", key);
     }
     public static Expr set(Env env, Symbol key, Expr value) {
         for (KeyValue kv = env.kv; kv != null; kv = kv.prev)
             if (kv.key.equals(key))
                 return kv.value = value;
-        throw new RuntimeException("set(): Not found " + key);
+        throw new DecLispException("set(): Not found %s", key);
     }
 
-    public record Cons(Expr car, Expr cdr) implements Expr { }
-    record Nil() implements Expr {}
+    public static <T> T cast(Expr e, Class<T> cls) {
+        if (cls.isInstance(e))
+            return cls.cast(e);
+        else
+            throw new DecLispException("cast: cannot cast '%s' to '%s'",
+                print(e), cls.getSimpleName());
+    }
+
+    public record Cons(Expr car, Expr cdr) implements Expr {
+        public Cons(Expr car, Expr cdr) {
+            if (!cdr.equals(NIL) && !(cdr instanceof Cons))
+                throw new DecLispException("cons: cannot cons '%s' and '%s'",
+                    print(car), print(cdr));
+            this.car = car;
+            this.cdr = cdr;
+        }
+
+    }
+    public static class Nil implements Expr { private Nil() {} }
     public static Expr NIL = new Nil();
-    public record Int(int value) implements Expr {}
-    public record Dec(BigDecimal value) implements Expr {}
+    // public record Int(int value) implements Expr {}
+    public record Dec(BigDecimal value) implements Expr {
+        @Override public final boolean equals(Object r) {
+            return r instanceof Dec d && value.compareTo(d.value) == 0;
+        }
+    }
     public record Bool(boolean value) implements Expr {}
     public static final Bool TRUE = new Bool(true);
     public static final Bool FALSE = new Bool(false);
@@ -70,23 +102,29 @@ public class DecLisp {
         return switch (e) {
             case Symbol s -> s.name;
             case Bool b -> "" + b.value;
-            case Int i -> "" + i.value;
-            case Dec d -> d.value.toString();
+            // case Int i -> "" + i.value;
+            case Dec d -> d.value.toString().replaceFirst("\\.0$", "");
             case Nil n -> "()";
             case Cons c -> printCons(c);
-            default -> throw new RuntimeException("print(): Unknown type " + e);
+            default -> throw new DecLispException("print(): Unknown type '%s'", e);
         };
     }
 
     public interface Apply extends Expr {
         Expr apply(Expr args, Env env);
     }
+    public interface Proc extends Apply {
+        Expr apply(Expr evaled);
+        default Expr apply(Expr args, Env env) {
+            return apply(evlis(args, env));
+        }
+    }
 
     public static Expr eval(Expr e, Env env) {
         return switch (e) {
             case Symbol s -> get(env, s);
             case Bool b -> b;
-            case Int i -> i;
+            // case Int i -> i;
             case Dec d -> d;
             case Nil n -> n;
             case Cons c -> {
@@ -94,9 +132,9 @@ public class DecLisp {
                 if (head instanceof Apply app)
                     yield app.apply(c.cdr, env);
                 else
-                    throw new RuntimeException("eval(): Cannot apply " + print(head) + " to " + print(c.cdr));
+                    throw new DecLispException("eval(): Cannot apply '%s' to '%s'", print(head), print(c.cdr));
             }
-            default -> throw new RuntimeException("eval(): Unknown type " + print(e));
+            default -> throw new DecLispException("eval(): Unknown type '%s'", print(e));
         };
     }
 
@@ -136,7 +174,7 @@ public class DecLisp {
                 buffer.append((char)ch);    // ch == EOFの時もappendする
                 return ch;
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new DecLispException(e);
             }
         }
 
@@ -159,18 +197,19 @@ public class DecLisp {
                 if (ch == ')') {
                     getClear();  // skip ')'
                     return DecLisp.list(NIL, list);
-                } else if (ch == '.') {
-                    getClear();  // skip '.'
-                    Expr result = DecLisp.list(read(), list);
-                    spaces();
-                    if (ch != ')')
-                        throw new RuntimeException("Reader.list(): ')' expected");
-                    getClear();  // skip ')'
-                    return result;
+                // no dot pair
+                // } else if (ch == '.') {
+                //     getClear();  // skip '.'
+                //     Expr result = DecLisp.list(read(), list);
+                //     spaces();
+                //     if (ch != ')')
+                //         throw new DecLispException("Reader.list(): ')' expected");
+                //     getClear();  // skip ')'
+                //     return result;
                 }
                 Expr e = read();
                 if (e == EOF)
-                    throw new RuntimeException("Reader.list(): Unexpected EOF");
+                    throw new DecLispException("Reader.list(): Unexpected EOF");
                 list.addLast(e);
             }
         }
@@ -197,23 +236,38 @@ public class DecLisp {
          * Digits: Digit { Digit }
         */
         Dec decimal() {
-            return new Dec(BigDecimal.ZERO);
-        }
-        Int integer() {
             while (isDigit(ch))
                 get();
-            return new Int(Integer.parseInt(buffer.substring(0, buffer.length() - 1)));
+            if (ch == '.') {
+                get();
+                while (isDigit(ch))
+                    get();
+            }
+            if (ch == 'E' || ch == 'e') {
+                get();
+                if (ch == '+' || ch == '-')
+                    get();
+                while (isDigit(ch))
+                    get();
+            }
+            return new Dec(new BigDecimal(buffer.substring(0, buffer.length() - 1)));
         }
+
+        // Int integer() {
+        //     while (isDigit(ch))
+        //         get();
+        //     return new Int(Integer.parseInt(buffer.substring(0, buffer.length() - 1)));
+        // }
 
         static boolean isSymbolFirst(int ch) {
             return switch (ch) {
-                case -1, '(', ')', '.' -> false;
+                case -1, '(', ')' -> false;
                 default -> !Character.isWhitespace(ch) && !isDigit(ch);
             };
         }
 
         static boolean isSymbolRest(int ch) {
-            return isSymbolFirst(ch) || isDigit(ch) || ch == '.';
+            return isSymbolFirst(ch) || isDigit(ch);
         }
 
         Expr symbol() {
@@ -235,47 +289,69 @@ public class DecLisp {
                 return list();
             else if (ch == '\'')
                 return quote();
+            else if (ch == '+')
+                return isDigit(get()) ? decimal() : new Symbol("+");
             else if (ch == '-')
-                return isDigit(get()) ? integer() : new Symbol("-");
+                return isDigit(get()) ? decimal() : new Symbol("-");
             else if (isDigit(ch))
-                return integer();
+                return decimal();
             else if (isSymbolFirst(ch))
                 return symbol();
             else 
-                throw new RuntimeException("Reader.read(): Unexpected character '%c'".formatted((char)ch));
+                throw new DecLispException("Reader.read(): Unexpected character '%c'", (char)ch);
         }
-    }
-
-    public interface IntBinaryPredicate {
-        boolean test(int a, int b);
-    }
-
-    static Int intArithmetic(Expr args, int start, IntBinaryOperator operator) {
-        int count = 0, prev = 0;
-        for (Expr a = args; a instanceof Cons c; a = c.cdr) {
-            int value = i(c.car);
-            if (count == 1)
-                start = prev;
-            start = operator.applyAsInt(start, value);
-            count++;
-            prev = value;
-        }
-        return i(start);
-    }
-
-    static Bool intCompare(Expr args, IntBinaryPredicate operator) {
-        return operator.test(i(car(args)), i(car(cdr(args)))) ? TRUE : FALSE;
     }
 
     public static Expr cons(Expr a, Expr b) { return new Cons(a, b); }
     public static Symbol sym(String name) { return new Symbol(name);}
     public static Symbol sym(Expr e) { return (Symbol)e;}
-    public static Expr car(Expr e) { return ((Cons)e).car; }
-    public static Expr cdr(Expr e) { return ((Cons)e).cdr; }
-    public static Int i(int value) { return new Int(value);}
-    public static int i(Expr e) { return ((Int)e).value();}
-    public static boolean b(Expr e) { return ((Bool)e).value();}
+    public static Expr car(Expr e) { return cast(e, Cons.class).car; }
+    public static Expr cdr(Expr e) { return cast(e, Cons.class).cdr; }
+    // public static Int i(int value) { return new Int(value);}
+    // public static int i(Expr e) { return ((Int)e).value();}
+    public static boolean b(Expr e) { return cast(e, Bool.class).value();}
     public static Bool b(boolean b) { return b ? TRUE : FALSE; }
+    public static BigDecimal d(Expr e) { return cast(e, Dec.class).value; }
+    public static Dec d(BigDecimal v) { return new Dec(v); }
+    public static Dec d(double v) { return new Dec(BigDecimal.valueOf(v)); }
+
+    public interface IntBinaryPredicate {
+        boolean test(int a, int b);
+    }
+
+    static Dec arithmetic(Expr args, BigDecimal start, BinaryOperator<BigDecimal> operator) {
+        BigDecimal prev = BigDecimal.ZERO;
+        int i = 0;
+        for (Expr a = args; a instanceof Cons c; a = c.cdr) {
+            BigDecimal value = d(c.car);
+            if (i == 1)
+                start = prev;
+            start = operator.apply(start, value);
+            prev = value;
+            ++i;
+        }
+        return d(start);
+    }
+
+    // static Int arithmetic(Expr args, int start, IntBinaryOperator operator) {
+    //     int count = 0, prev = 0;
+    //     for (Expr a = args; a instanceof Cons c; a = c.cdr) {
+    //         int value = i(c.car);
+    //         if (count == 1)
+    //             start = prev;
+    //         start = operator.applyAsInt(start, value);
+    //         count++;
+    //         prev = value;
+    //     }
+    //     return i(start);
+    // }
+
+    static Bool compare(Expr args, IntPredicate predicate) {
+        return b(predicate.test(d(car(args)).compareTo(d(car(cdr(args))))));
+    }
+    // static Bool compare(Expr args, BiPredicate<BigDecimal, BigDecimal> operator) {
+    //     return operator.test(d(car(args)), d(car(cdr(args)))) ? TRUE : FALSE;
+    // }
 
     public static Expr evlis(Expr args, Env env) {
         List<Expr> list = new ArrayList<>();
@@ -317,10 +393,6 @@ public class DecLisp {
                 return NIL;
         });
         define(env, sym("define"), (Apply)(a, e) -> define(e, sym(car(a)), eval(car(cdr(a)), e)));
-        define(env, sym("car"), (Apply)(a, e) -> car(car(evlis(a, e))));
-        define(env, sym("cdr"), (Apply)(a, e) -> cdr(car(evlis(a, e))));
-        define(env, sym("cons"), (Apply)(a, e) -> { Expr v = evlis(a, e); return cons(car(v), car(cdr(v))); });
-        define(env, sym("not"), (Apply)(a, e) -> car(evlis(a, e)).equals(FALSE) ? TRUE : FALSE);
         define(env, sym("and"), (Apply)(a, e) -> {
             Expr last = TRUE;
             for (Expr x = a; x instanceof Cons c; x = c.cdr)
@@ -335,16 +407,20 @@ public class DecLisp {
                     return last;
             return last;
         });
-        define(env, sym("+"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 0, (x, y) -> x + y));
-        define(env, sym("-"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 0, (x, y) -> x - y));
-        define(env, sym("*"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 1, (x, y) -> x * y));
-        define(env, sym("/"), (Apply)(a, e) -> intArithmetic(evlis(a, e), 1, (x, y) -> x / y));
-        define(env, sym("=="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x == y));
-        define(env, sym("!="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x != y));
-        define(env, sym("<"), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x < y));
-        define(env, sym("<="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x <= y));
-        define(env, sym(">"), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x > y));
-        define(env, sym(">="), (Apply)(a, e) -> intCompare(evlis(a, e), (x, y) -> x >= y));
+        define(env, sym("car"), (Proc) a -> car(car(a)));
+        define(env, sym("cdr"), (Proc) a -> cdr(car(a)));
+        define(env, sym("cons"), (Proc) a -> cons(car(a), car(cdr(a))));
+        define(env, sym("not"), (Proc) a -> car(a).equals(FALSE) ? TRUE : FALSE);
+        define(env, sym("+"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.add(y)));
+        define(env, sym("-"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.subtract(y)));
+        define(env, sym("*"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.multiply(y)));
+        define(env, sym("/"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.divide(y, MathContext.DECIMAL128)));
+        define(env, sym("=="), (Proc) a -> compare(a, x -> x == 0));
+        define(env, sym("!="), (Proc) a -> compare(a, x -> x != 0));
+        define(env, sym("<"), (Proc) a -> compare(a, x -> x < 0));
+        define(env, sym("<="), (Proc) a -> compare(a, x -> x <= 0));
+        define(env, sym(">"), (Proc) a -> compare(a, x -> x > 0));
+        define(env, sym(">="), (Proc) a -> compare(a, x -> x >= 0));
         return env;
     }
 }
