@@ -246,7 +246,7 @@ public class TestDeclisp {
     @Test 
     public void testAdd() {
         Env env = defaultEnv();
-        assertEquals(read("(16 18 20)"), evalRead("(+ (1 2 3) (4) 5 (6 7 8)) ", env));
+        assertEquals(read("(16 18 20)"), evalRead("(+ (1 2 3) (4) 5 (6 (- 10 3) 8)) ", env));
     }
 
 }
