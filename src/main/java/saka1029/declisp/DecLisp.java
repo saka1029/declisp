@@ -25,7 +25,9 @@ public class DecLisp {
 
     public interface Expr{}
 
-    public record Symbol(String name) implements Expr {}
+    public record Symbol(String name) implements Expr {
+        @Override public final String toString() { return name; }
+    }
     public static final Symbol QUOTE = new Symbol("quote");
 
     public static class KeyValue {
@@ -72,16 +74,21 @@ public class DecLisp {
             this.car = car;
             this.cdr = cdr;
         }
-
+        @Override public final String toString() { return printCons(this); }
     }
     public static class Nil implements Expr { private Nil() {} }
-    public static Expr NIL = new Nil();
+    public static Expr NIL = new Nil() { @Override public String toString() { return "()"; }};
     public record Dec(BigDecimal value) implements Expr {
         @Override public final boolean equals(Object r) {
             return r instanceof Dec d && value.compareTo(d.value) == 0;
         }
+        @Override public final String toString() {
+            return value.toString().replaceFirst("\\.0$", "");
+        }
     }
-    public record Bool(boolean value) implements Expr {}
+    public record Bool(boolean value) implements Expr {
+        @Override public final String toString() { return "" + value; }
+    }
     public static final Bool TRUE = new Bool(true);
     public static final Bool FALSE = new Bool(false);
 
@@ -98,12 +105,12 @@ public class DecLisp {
 
     public static String print(Expr e) {
         return switch (e) {
-            case Symbol s -> s.name;
-            case Bool b -> "" + b.value;
-            case Dec d -> d.value.toString().replaceFirst("\\.0$", "");
-            case Nil n -> "()";
-            case Cons c -> printCons(c);
-            default -> "Unknown type '%s'".formatted(e);
+            case Symbol s -> s.toString();
+            case Bool b -> b.toString();
+            case Dec d -> d.toString();
+            case Nil n -> n.toString();
+            case Cons c -> c.toString();
+            default -> "print: unknown type '%s'".formatted(e);
         };
     }
 
@@ -307,6 +314,8 @@ public class DecLisp {
     }
 
     public static Expr arithmet(Expr evaled, BigDecimal unit, BinaryOperator<BigDecimal> op) {
+        if (evaled.equals(NIL))
+            return d(unit);
         List<List<BigDecimal>> mat = new ArrayList<>();
         int maxRowSize = 0;
         for (Expr e = evaled; e instanceof Cons c; e = c.cdr) {
@@ -342,19 +351,19 @@ public class DecLisp {
         return r;
     }
 
-    static Dec arithmetic(Expr args, BigDecimal start, BinaryOperator<BigDecimal> operator) {
-        BigDecimal prev = BigDecimal.ZERO;
-        int i = 0;
-        for (Expr a = args; a instanceof Cons c; a = c.cdr) {
-            BigDecimal value = d(c.car);
-            if (i == 1)
-                start = prev;
-            start = operator.apply(start, value);
-            prev = value;
-            ++i;
-        }
-        return d(start);
-    }
+    // static Dec arithmetic(Expr args, BigDecimal start, BinaryOperator<BigDecimal> operator) {
+    //     BigDecimal prev = BigDecimal.ZERO;
+    //     int i = 0;
+    //     for (Expr a = args; a instanceof Cons c; a = c.cdr) {
+    //         BigDecimal value = d(c.car);
+    //         if (i == 1)
+    //             start = prev;
+    //         start = operator.apply(start, value);
+    //         prev = value;
+    //         ++i;
+    //     }
+    //     return d(start);
+    // }
 
     static Bool compare(Expr args, IntPredicate predicate) {
         return b(predicate.test(d(car(args)).compareTo(d(car(cdr(args))))));

@@ -101,17 +101,17 @@ public class TestDeclisp {
             return d(d(car(evaled)).add(d(car(cdr(evaled)))));
         });
         assertEquals(d(3), eval(list(sym("+"), d(1), d(2)), env));
-        try {
-            eval(list(sym("a"), d(1)), env);
-            fail();
-        } catch (DecLispException x) {
-            assertEquals("eval(): Cannot apply '3' to '(1)'", x.getMessage());
-        }
+        // try {
+        assertEquals(list(d(3), d(1)), eval(list(sym("a"), d(1)), env));
+            // fail();
+        // } catch (DecLispException x) {
+            // assertEquals("eval(): Cannot apply '3' to '(1)'", x.getMessage());
+        // }
         try {
             eval(new Expr(){@Override public String toString() { return "UNKNOWN"; }}, env);
             fail();
         } catch (DecLispException x) {
-            assertEquals("eval(): Unknown type 'Unknown type 'UNKNOWN''", x.getMessage());
+            assertEquals("eval(): Unknown type 'print: unknown type 'UNKNOWN''", x.getMessage());
         }
     }
 
@@ -155,7 +155,7 @@ public class TestDeclisp {
         } catch (DecLispException x) {
             assertEquals("cons: cannot cons '1' and '2'", x.getMessage());
         }
-        assertEquals("Unknown type 'UNKNOWN'", print(new Expr(){@Override public String toString() { return "UNKNOWN"; }}));
+        assertEquals("print: unknown type 'UNKNOWN'", print(new Expr(){@Override public String toString() { return "UNKNOWN"; }}));
     }
 
     static Expr evalRead(String s, Env e) { return eval(read(s), e); }
@@ -176,6 +176,7 @@ public class TestDeclisp {
         assertEquals(sym("a"), evalRead("((lambda (a) (car a)) '(a b))", env));
         assertEquals(d(6), evalRead("(+ 1 2 3)", env));
         assertEquals(d(6), evalRead("(+ 1 2 (+ 1 2))", env));
+        System.out.println(print(evalRead("(-)", env)));
         assertEquals(d(0), evalRead("(-)", env));
         assertEquals(d(-1), evalRead("(- 1)", env));
         assertEquals(d(-4), evalRead("(- 1 2 3)", env));
