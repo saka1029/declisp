@@ -316,7 +316,7 @@ public class DecLisp {
             }
             if (row.isEmpty())
                 row.add(d(c.car));
-            System.out.println(row);
+            // System.out.println(row);
             maxRowSize = Math.max(maxRowSize, row.size());
             mat.add(row);
         }
@@ -327,10 +327,8 @@ public class DecLisp {
         for (int r = 0, rmax = mat.size(); r < rmax; ++r) {
             for (int c = 0; c < maxRowSize; ++c) {
                 BigDecimal adder = mat.get(r).get(c >= mat.get(r).size() ? 0 : c);
-                if (r == 1) {
-                    System.out.println(result[c] + "->" + prev[c]);
+                if (r == 1)
                     result[c] = prev[c];
-                }
                 result[c] = op.apply(result[c], adder);
                 prev[c] = adder;
             }
@@ -340,7 +338,7 @@ public class DecLisp {
         Expr r = NIL;
         for (int i = maxRowSize - 1; i >= 0; --i)
             r = cons(d(result[i]), r);
-        System.out.println("r=" + print(r));
+        // System.out.println("r=" + print(r));
         return r;
     }
 
@@ -421,11 +419,13 @@ public class DecLisp {
         define(env, sym("cons"), (Proc) a -> cons(car(a), car(cdr(a))));
         define(env, sym("not"), (Proc) a -> car(a).equals(FALSE) ? TRUE : FALSE);
         // define(env, sym("+"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.add(y)));
-        define(env, sym("+"), (Proc) a -> arithmet(a, BigDecimal.ZERO, (x, y) -> x.add(y)));
         // define(env, sym("-"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.subtract(y)));
+        // define(env, sym("*"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.multiply(y)));
+        // define(env, sym("/"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.divide(y, MathContext.DECIMAL128)));
+        define(env, sym("+"), (Proc) a -> arithmet(a, BigDecimal.ZERO, (x, y) -> x.add(y)));
         define(env, sym("-"), (Proc) a -> arithmet(a, BigDecimal.ZERO, (x, y) -> x.subtract(y)));
-        define(env, sym("*"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.multiply(y)));
-        define(env, sym("/"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.divide(y, MathContext.DECIMAL128)));
+        define(env, sym("*"), (Proc) a -> arithmet(a, BigDecimal.ONE, (x, y) -> x.multiply(y)));
+        define(env, sym("/"), (Proc) a -> arithmet(a, BigDecimal.ONE, (x, y) -> x.divide(y, MathContext.DECIMAL128)));
         define(env, sym("=="), (Proc) a -> compare(a, x -> x == 0));
         define(env, sym("!="), (Proc) a -> compare(a, x -> x != 0));
         define(env, sym("<"), (Proc) a -> compare(a, x -> x < 0));
