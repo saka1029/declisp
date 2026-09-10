@@ -132,9 +132,15 @@ public class TestDeclisp {
         assertEquals(sym("𩸽"), read("𩸽"));
     }
 
-        @Test
+    @Test
     public void testReadNoSpaces() {
         assertEquals(list(d(12), sym("𩸽")), read("(12𩸽)"));
+    }
+
+    @Test
+    public void testReadLongSymbol() {
+        String longName = "A".repeat(90);
+        assertEquals(sym(longName), read(longName));
     }
 
     @Test
@@ -202,7 +208,7 @@ public class TestDeclisp {
         assertEquals(sym("a"), evalRead("((lambda (a) (car a)) '(a b))", env));
         assertEquals(d(6), evalRead("(+ 1 2 3)", env));
         assertEquals(d(6), evalRead("(+ 1 2 (+ 1 2))", env));
-        System.out.println(print(evalRead("(-)", env)));
+        // System.out.println(print(evalRead("(-)", env)));
         assertEquals(d(0), evalRead("(-)", env));
         assertEquals(d(-1), evalRead("(- 1)", env));
         assertEquals(d(-4), evalRead("(- 1 2 3)", env));
@@ -280,7 +286,7 @@ public class TestDeclisp {
         String hokke = "𩸽";
         StringBuilder sb = new StringBuilder();
         sb.appendCodePoint(Character.codePointAt(hokke, 0));
-        System.out.println(sb);
+        // System.out.println(sb);
         assertEquals(hokke, sb.toString());
     }
 

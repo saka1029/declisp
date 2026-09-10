@@ -6,7 +6,9 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.function.BinaryOperator;
 import java.util.function.IntPredicate;
 
@@ -23,7 +25,27 @@ public class DecLisp {
         }
     }
 
-    public interface Expr{}
+    public interface Expr extends Iterable<Expr> {
+        @Override default Iterator<Expr> iterator() {
+            return new Iterator<>() {
+                Expr expr = Expr.this;
+
+                @Override
+                public boolean hasNext() {
+                    return expr instanceof Cons;
+                }
+
+                @Override
+                public Expr next() {
+                    if (expr instanceof Cons c) {
+                        expr = c.cdr;
+                        return c.car;
+                    } else
+                        throw new NoSuchElementException();
+                }
+            };
+        }
+    }
 
     public record Symbol(String name) implements Expr {
         @Override public final String toString() { return name; }
@@ -97,9 +119,8 @@ public class DecLisp {
         if (cons.cdr instanceof Cons cdr && cons.car.equals(QUOTE)) // && cdr.cdr.equals(NIL))
             return sb.append("'").append(print(cdr.car)).toString();
         sb.append("(").append(print(cons.car));
-        Expr e;
-        for (e = cons.cdr; e instanceof Cons c; e = c.cdr)
-            sb.append(" ").append(print(c.car));
+        for (Expr c : cons.cdr)
+            sb.append(" ").append(print(c));
         return sb.append(")").toString();
     }
 
@@ -150,18 +171,22 @@ public class DecLisp {
         return r;
     }
 
-    public static Expr list(Expr dot, List<Expr> list) {
-        Expr r = dot;
+    public static Expr list(List<Expr> list) {
+        Expr r = NIL;
         for (int i = list.size() - 1; i >= 0; --i)
             r = new Cons(list.get(i), r);
         return r;
     }
 
     public static class CodePointBuffer {
-        final int[] buffer;
+        int[] buffer;
         int next = 0;
-        public CodePointBuffer() { this.buffer = new int[4096]; }
-        public void append(int cp) { buffer[next++] = cp; }
+        public CodePointBuffer() { this.buffer = new int[64]; }
+        public void append(int cp) {
+            if (next >= buffer.length)
+                buffer = Arrays.copyOf(buffer, buffer.length * 2);
+            buffer[next++] = cp;
+        }
         int pop() { return buffer[--next]; }
         public void clear() { next = 0; }
         public void clearButLast() {
@@ -211,7 +236,6 @@ public class DecLisp {
         int get() {
             try {
                 ch = readCodePoint();
-                // ch = reader.read();
                 buffer.append(ch);    // ch == EOFの時もappendする
                 return ch;
             } catch (IOException e) {
@@ -237,7 +261,7 @@ public class DecLisp {
                 spaces();
                 if (ch == ')') {
                     clearGet();  // skip ')'
-                    return DecLisp.list(NIL, list);
+                    return DecLisp.list(list);
                 // no dot pair
                 }
                 Expr e = read();
@@ -387,20 +411,22 @@ public class DecLisp {
 
     public static Expr evlis(Expr args, Env env) {
         List<Expr> list = new ArrayList<>();
-        for (Expr e = args; e instanceof Cons c; e = c.cdr)
-            list.add(eval(c.car, env));
-        return list(NIL, list);
+        for (Expr c : args)
+            list.add(eval(c, env));
+        return list(list);
     }
 
     public static void pairlis(Expr parms, Expr args, Env env) {
-        for (Expr p = parms; p instanceof Cons c; p = c.cdr, args = cdr(args))
-            define(env, (Symbol)c.car, car(args));
+        for (Expr c : parms) {
+            define(env, (Symbol)c, car(args));
+            args = cdr(args);
+        }
     }
 
     public static Expr progn(Expr body, Env env) {
         Expr r = NIL;
-        for (Expr b = body; b instanceof Cons c; b = c.cdr)
-            r = eval(c.car, env);
+        for (Expr c : body)
+            r = eval(c, env);
         return r;
     }
 
