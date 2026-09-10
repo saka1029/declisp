@@ -51,11 +51,15 @@ public class DecLisp {
             };
         }
     }
+    public static Expr car(Expr e) { return cast(e, Cons.class).car; }
+    public static Expr cdr(Expr e) { return cast(e, Cons.class).cdr; }
 
     public record Symbol(String name) implements Expr {
         @Override public final String toString() { return name; }
     }
     public static final Symbol QUOTE = new Symbol("quote");
+    public static Symbol sym(String name) { return new Symbol(name);}
+    public static Symbol sym(Expr e) { return (Symbol)e;}
 
     public static class KeyValue {
         KeyValue prev; Symbol key; Expr value;
@@ -65,8 +69,8 @@ public class DecLisp {
     }
     public static class Env {
         KeyValue kv;
-        public Env(KeyValue kv) { this.kv = kv; }
-        public Env() { this(null); }
+        public Env() { this.kv = null; }
+        public Env(Env e) { this.kv = e.kv; }
     }
     public static Symbol define(Env e, Symbol key, Expr value) {
         e.kv = new KeyValue(e.kv, key, value);
@@ -103,22 +107,7 @@ public class DecLisp {
         }
         @Override public final String toString() { return printCons(this); }
     }
-    public static class Nil implements Expr { private Nil() {} }
-    public static Expr NIL = new Nil() { @Override public String toString() { return "()"; }};
-    public record Dec(BigDecimal value) implements Expr {
-        @Override public final boolean equals(Object r) {
-            return r instanceof Dec d && value.compareTo(d.value) == 0;
-        }
-        @Override public final String toString() {
-            return value.toString().replaceFirst("\\.0$", "");
-        }
-    }
-    public record Bool(boolean value) implements Expr {
-        @Override public final String toString() { return "" + value; }
-    }
-    public static final Bool TRUE = new Bool(true);
-    public static final Bool FALSE = new Bool(false);
-
+    public static Expr cons(Expr a, Expr b) { return new Cons(a, b); }
     static String printCons(Cons cons) {
         StringBuilder sb = new StringBuilder();
         if (cons.cdr instanceof Cons cdr && cons.car.equals(QUOTE)) // && cdr.cdr.equals(NIL))
@@ -128,6 +117,29 @@ public class DecLisp {
             sb.append(" ").append(print(c));
         return sb.append(")").toString();
     }
+
+    public static class Nil implements Expr { private Nil() {} }
+    public static Expr NIL = new Nil() { @Override public String toString() { return "()"; }};
+
+    public record Dec(BigDecimal value) implements Expr {
+        @Override public final boolean equals(Object r) {
+            return r instanceof Dec d && value.compareTo(d.value) == 0;
+        }
+        @Override public final String toString() {
+            return value.toString().replaceFirst("\\.0$", "");
+        }
+    }
+    public static BigDecimal d(Expr e) { return cast(e, Dec.class).value; }
+    public static Dec d(BigDecimal v) { return new Dec(v); }
+    public static Dec d(double v) { return new Dec(BigDecimal.valueOf(v)); }
+
+    public record Bool(boolean value) implements Expr {
+        @Override public final String toString() { return "" + value; }
+    }
+    public static boolean b(Expr e) { return cast(e, Bool.class).value();}
+    public static Bool b(boolean b) { return b ? TRUE : FALSE; }
+    public static final Bool TRUE = new Bool(true);
+    public static final Bool FALSE = new Bool(false);
 
     public static String print(Expr e) {
         return switch (e) {
@@ -172,14 +184,14 @@ public class DecLisp {
     public static Expr list(Expr... list) {
         Expr r = NIL;
         for (int i = list.length - 1; i >= 0; --i)
-            r = new Cons(list[i], r);
+            r = cons(list[i], r);
         return r;
     }
 
     public static Expr list(List<Expr> list) {
         Expr r = NIL;
         for (int i = list.size() - 1; i >= 0; --i)
-            r = new Cons(list.get(i), r);
+            r = cons(list.get(i), r);
         return r;
     }
 
@@ -361,16 +373,6 @@ public class DecLisp {
         }
     }
 
-    public static Expr cons(Expr a, Expr b) { return new Cons(a, b); }
-    public static Symbol sym(String name) { return new Symbol(name);}
-    public static Symbol sym(Expr e) { return (Symbol)e;}
-    public static Expr car(Expr e) { return cast(e, Cons.class).car; }
-    public static Expr cdr(Expr e) { return cast(e, Cons.class).cdr; }
-    public static boolean b(Expr e) { return cast(e, Bool.class).value();}
-    public static Bool b(boolean b) { return b ? TRUE : FALSE; }
-    public static BigDecimal d(Expr e) { return cast(e, Dec.class).value; }
-    public static Dec d(BigDecimal v) { return new Dec(v); }
-    public static Dec d(double v) { return new Dec(BigDecimal.valueOf(v)); }
 
     public static Expr arithmet(Expr evaled, BigDecimal unit, BinaryOperator<BigDecimal> op) {
         if (evaled.equals(NIL))
@@ -440,7 +442,7 @@ public class DecLisp {
         define(env, sym("lambda"), (Apply)(a, e) -> {
             Expr parms = car(a), body = cdr(a);
             return (Apply)(aa, ee) -> {
-                Env n = new Env(e.kv);
+                Env n = new Env(e);
                 pairlis(parms, evlis(aa, ee), n);
                 return progn(body, n);
             };
