@@ -375,30 +375,35 @@ public class DecLisp {
         }
     }
 
+    interface Converter<T> {
+        T type(Expr e);
+        T[] array(int size);
+        Expr expr(T t);
+    }
 
-    public static Expr arithmet(Expr evaled, BigDecimal unit, BinaryOperator<BigDecimal> op) {
+    public static <T> Expr arithmetic(Expr evaled, T unit, BinaryOperator<T> op, Converter<T> conv) {
         if (evaled.equals(NIL))
-            return d(unit);
-        List<List<BigDecimal>> mat = new ArrayList<>();
+            return conv.expr(unit);
+        List<List<T>> mat = new ArrayList<>();
         int maxRowSize = 0;
         for (Expr c : evaled) {
-            List<BigDecimal> row = new ArrayList<>();
+            List<T> row = new ArrayList<>();
             for (Expr f = c; f instanceof Cons d; f = d.cdr) {
-                row.add(d(d.car));
+                row.add(conv.type(d.car));
             }
             if (row.isEmpty())
-                row.add(d(c));
+                row.add(conv.type(c));
             // System.out.println(row);
             maxRowSize = Math.max(maxRowSize, row.size());
             mat.add(row);
         }
         // System.out.println(maxRowSize);
-        BigDecimal[] result = new BigDecimal[maxRowSize];
+        T[] result = conv.array(maxRowSize);
         Arrays.fill(result, unit);
         for (int c = 0; c < maxRowSize; ++c) {
-            BigDecimal prev = null;
+            T prev = null;
             for (int r = 0, rmax = mat.size(); r < rmax; ++r) {
-                BigDecimal adder = mat.get(r).get(c >= mat.get(r).size() ? 0 : c);
+                T adder = mat.get(r).get(c >= mat.get(r).size() ? 0 : c);
                 if (r == 1)
                     result[c] = prev;
                 result[c] = op.apply(result[c], adder);
@@ -406,10 +411,10 @@ public class DecLisp {
             }
         }
         if (maxRowSize == 1)
-            return d(result[0]);
+            return conv.expr(result[0]);
         Expr r = NIL;
         for (int i = maxRowSize - 1; i >= 0; --i)
-            r = cons(d(result[i]), r);
+            r = cons(conv.expr(result[i]), r);
         // System.out.println("r=" + print(r));
         return r;
     }
@@ -437,6 +442,25 @@ public class DecLisp {
             r = eval(c, env);
         return r;
     }
+
+    static final Converter<BigDecimal> DecConv = new Converter<>() {
+        @Override
+        public BigDecimal type(Expr e) {
+            // return cast(e, Dec.class).value;
+            return d(e);
+        }
+
+        @Override
+        public BigDecimal[] array(int size) {
+            return new BigDecimal[size];
+        }
+
+        @Override
+        public Expr expr(BigDecimal t) {
+            // return new Dec(t);
+            return d(t);
+        }
+    };
 
     public static Env defaultEnv() {
         Env env = new Env();
@@ -477,10 +501,10 @@ public class DecLisp {
         define(env, sym("cdr"), (Proc) a -> cdr(car(a)));
         define(env, sym("cons"), (Proc) a -> cons(car(a), car(cdr(a))));
         define(env, sym("not"), (Proc) a -> car(a).equals(FALSE) ? TRUE : FALSE);
-        define(env, sym("+"), (Proc) a -> arithmet(a, BigDecimal.ZERO, (x, y) -> x.add(y)));
-        define(env, sym("-"), (Proc) a -> arithmet(a, BigDecimal.ZERO, (x, y) -> x.subtract(y)));
-        define(env, sym("*"), (Proc) a -> arithmet(a, BigDecimal.ONE, (x, y) -> x.multiply(y)));
-        define(env, sym("/"), (Proc) a -> arithmet(a, BigDecimal.ONE, (x, y) -> x.divide(y, MathContext.DECIMAL128)));
+        define(env, sym("+"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.add(y), DecConv));
+        define(env, sym("-"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.subtract(y), DecConv));
+        define(env, sym("*"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.multiply(y), DecConv));
+        define(env, sym("/"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.divide(y, MathContext.DECIMAL128), DecConv));
         define(env, sym("=="), (Proc) a -> compare(a, x -> x == 0));
         define(env, sym("!="), (Proc) a -> compare(a, x -> x != 0));
         define(env, sym("<"), (Proc) a -> compare(a, x -> x < 0));
