@@ -10,6 +10,7 @@ import static saka1029.declisp.DecLisp.*;
 import java.io.IOException;
 
 import org.junit.Test;
+import org.junit.platform.commons.annotation.Testable;
 
 import saka1029.declisp.DecLisp.Apply;
 import saka1029.declisp.DecLisp.Dec;
@@ -130,6 +131,11 @@ public class TestDeclisp {
         UTF-32 Encoding: 0x00029E3D (171581)
          */
         assertEquals(sym("𩸽"), read("𩸽"));
+    }
+
+        @Test
+    public void testReadNoSpaces() {
+        assertEquals(list(d(12), sym("𩸽")), read("(12𩸽)"));
     }
 
     @Test

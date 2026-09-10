@@ -207,7 +207,9 @@ public class DecLisp {
                 return "";
             if (Character.isLowSurrogate(buffer.charAt(last)))
                 --last;
-            return buffer.substring(0, last);
+            String r = buffer.substring(0, last);
+            buffer.delete(0, last);
+            return r;
         }
 
         int getClear() {
