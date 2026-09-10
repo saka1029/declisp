@@ -110,12 +110,26 @@ public class TestDeclisp {
         } catch (DecLispException x) {
             assertEquals("eval(): Unknown type 'print: unknown type 'UNKNOWN''", x.getMessage());
         }
-        try {
-            eval(list(TRUE, d(3)), env);
-            fail();
-        } catch (DecLispException x) {
-            assertEquals("eval(): Cannot apply 'true' to '(3)'", x.getMessage());
-        }
+        assertEquals(list(TRUE, d(3)), eval(list(TRUE, d(3)), env));
+    }
+
+    @Test 
+    public void testEvalAndOr() {
+        Env env = defaultEnv();
+        assertEquals(FALSE, evalRead("(not true)", env));
+        assertEquals(TRUE, evalRead("(not false)", env));
+        assertEquals(TRUE, evalRead("(and)", env));
+        assertEquals(TRUE, evalRead("(and true)", env));
+        assertEquals(TRUE, evalRead("(and true true)", env));
+        assertEquals(FALSE, evalRead("(and true false)", env));
+        assertEquals(FALSE, evalRead("(and false true)", env));
+        assertEquals(FALSE, evalRead("(and false false)", env));
+        assertEquals(FALSE, evalRead("(or)", env));
+        assertEquals(TRUE, evalRead("(or true)", env));
+        assertEquals(TRUE, evalRead("(or true true)", env));
+        assertEquals(TRUE, evalRead("(or true false)", env));
+        assertEquals(TRUE, evalRead("(or false true)", env));
+        assertEquals(FALSE, evalRead("(or false false)", env));
 
     }
 
@@ -202,8 +216,6 @@ public class TestDeclisp {
         assertEquals(list(d(1), d(2)), evalRead("(cons 1 '(2))", env));
         // Cannot cons any and ATOM
         // assertEquals(cons(d(1), d(2)), evalRead("(cons 1 2)", env));
-        assertEquals(FALSE, evalRead("(not true)", env));
-        assertEquals(TRUE, evalRead("(not false)", env));
         assertEquals(FALSE, evalRead("(not (== 0 0))", env));
         assertEquals(sym("a"), evalRead("((lambda (a) (car a)) '(a b))", env));
         assertEquals(d(6), evalRead("(+ 1 2 3)", env));

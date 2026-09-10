@@ -174,6 +174,8 @@ public class DecLisp {
                     yield app.apply(c.cdr, env);
                 else if (head instanceof Dec)   // リストの先頭が数字ならevlisする
                     yield cons(head, evlis(c.cdr, env));
+                else if (head instanceof Bool)   // リストの先頭が真偽値ならevlisする
+                    yield cons(head, evlis(c.cdr, env));
                 else
                     throw new DecLispException("eval(): Cannot apply '%s' to '%s'", print(head), print(c.cdr));
             }
@@ -459,15 +461,15 @@ public class DecLisp {
         define(env, sym("define"), (Apply)(a, e) -> define(e, sym(car(a)), eval(car(cdr(a)), e)));
         define(env, sym("and"), (Apply)(a, e) -> {
             Expr last = TRUE;
-            for (Expr x = a; x instanceof Cons c; x = c.cdr)
-                if ((last = eval(c.car, e)).equals(FALSE))
+            for (Expr c : a)
+                if ((last = eval(c, e)).equals(FALSE))
                     return last;
             return last;
         });
         define(env, sym("or"), (Apply)(a, e) -> {
             Expr last = FALSE;
-            for (Expr x = a; x instanceof Cons c; x = c.cdr)
-                if (!(last = eval(c.car, e)).equals(FALSE))
+            for (Expr c : a)
+                if (!(last = eval(c, e)).equals(FALSE))
                     return last;
             return last;
         });
