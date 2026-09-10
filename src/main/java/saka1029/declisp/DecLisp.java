@@ -157,6 +157,22 @@ public class DecLisp {
         return r;
     }
 
+    public static class CodePointBuffer {
+        final int[] buffer;
+        int next = 0;
+        public CodePointBuffer() { this.buffer = new int[4096]; }
+        public void append(int cp) { buffer[next++] = cp; }
+        int pop() { return buffer[--next]; }
+        public void clear() { next = 0; }
+        public String stringButLast() {
+            int last = pop();
+            String s = new String(buffer, 0, next);
+            clear();
+            append(last);
+            return s;
+        }
+    }
+
     public static class Reader {
         public static final Expr EOF = new Expr() {};
 
