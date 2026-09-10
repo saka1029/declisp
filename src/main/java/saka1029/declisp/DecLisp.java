@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.BinaryOperator;
 import java.util.function.IntPredicate;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class DecLisp {
 
@@ -26,6 +28,9 @@ public class DecLisp {
     }
 
     public interface Expr extends Iterable<Expr> {
+        default Stream<Expr> stream() {
+            return StreamSupport.stream(spliterator(), false);
+        }
         @Override default Iterator<Expr> iterator() {
             return new Iterator<>() {
                 Expr expr = Expr.this;
@@ -372,13 +377,13 @@ public class DecLisp {
             return d(unit);
         List<List<BigDecimal>> mat = new ArrayList<>();
         int maxRowSize = 0;
-        for (Expr e = evaled; e instanceof Cons c; e = c.cdr) {
+        for (Expr c : evaled) {
             List<BigDecimal> row = new ArrayList<>();
-            for (Expr f = c.car; f instanceof Cons d; f = d.cdr) {
+            for (Expr f = c; f instanceof Cons d; f = d.cdr) {
                 row.add(d(d.car));
             }
             if (row.isEmpty())
-                row.add(d(c.car));
+                row.add(d(c));
             // System.out.println(row);
             maxRowSize = Math.max(maxRowSize, row.size());
             mat.add(row);
@@ -410,10 +415,9 @@ public class DecLisp {
     }
 
     public static Expr evlis(Expr args, Env env) {
-        List<Expr> list = new ArrayList<>();
-        for (Expr c : args)
-            list.add(eval(c, env));
-        return list(list);
+        return list(args.stream()
+            .map(e ->eval(e, env))
+            .toArray(Expr[]::new));
     }
 
     public static void pairlis(Expr parms, Expr args, Env env) {
