@@ -1,7 +1,9 @@
 package saka1029.declisp;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static saka1029.declisp.DecLisp.*;
 
@@ -101,21 +103,40 @@ public class TestDeclisp {
             return d(d(car(evaled)).add(d(car(cdr(evaled)))));
         });
         assertEquals(d(3), eval(list(sym("+"), d(1), d(2)), env));
-        // try {
         assertEquals(list(d(3), d(1)), eval(list(sym("a"), d(1)), env));
-            // fail();
-        // } catch (DecLispException x) {
-            // assertEquals("eval(): Cannot apply '3' to '(1)'", x.getMessage());
-        // }
         try {
             eval(new Expr(){@Override public String toString() { return "UNKNOWN"; }}, env);
             fail();
         } catch (DecLispException x) {
             assertEquals("eval(): Unknown type 'print: unknown type 'UNKNOWN''", x.getMessage());
         }
+        try {
+            eval(list(TRUE, d(3)), env);
+            fail();
+        } catch (DecLispException x) {
+            assertEquals("eval(): Cannot apply 'true' to '(3)'", x.getMessage());
+        }
+
     }
 
     static Expr read(String s) { return new Reader(s).read(); }
+
+    @Test
+    public void testReadHokke() {
+        /*
+        𩸽
+        UTF-8 Encoding:	0xF0 0xA9 0xB8 0xBD
+        UTF-16 Encoding: 0xD867 0xDE3D
+        UTF-32 Encoding: 0x00029E3D (171581)
+         */
+        assertEquals(sym("𩸽"), read("𩸽"));
+    }
+
+    @Test
+    public void testReadList() {
+        Expr e = read("(1 a)");
+        assertEquals(list(d(1), sym("a")), read("(1 a)"));
+    }
 
     @Test
     public void testRead() {
@@ -130,7 +151,13 @@ public class TestDeclisp {
         assertEquals(d(0.1234), read("12.34e-2"));
         assertEquals(d(1234), read("12.34e+2"));
         assertEquals(sym(","), read(","));
-        assertEquals(sym("😀"), read("😀"));
+        try {
+            read("😀");
+            fail();
+        } catch (DecLispException x) {
+            // System.out.println(x.getMessage());
+            // assertEquals("Reader.read(): ", x.getMessage());
+        }
     }
 
     @Test 
@@ -219,6 +246,11 @@ public class TestDeclisp {
         assertEquals(d(0.5), evalRead("(/ 2)", env));
         assertEquals(d(0.25), evalRead("(/ 1 4)", env));
         assertEquals(d(4), evalRead("(/ 24 2 3)", env));
+        assertEquals(read("(9 10 11)"), evalRead("(+ (1 2 3) 8)) ", env));
+        assertEquals(read("(9 10 11)"), evalRead("(+ 8 (1 2 3))) ", env));
+        assertEquals(read("(0.2 0.1 0.05)"), evalRead("(/ (5 10 20))) ", env));
+        assertEquals(read("(2.5 5 10)"), evalRead("(/ (5 10 20) 2)) ", env));
+        assertEquals(read("(16 18 20)"), evalRead("(+ (1 2 3) (4) 5 (6 (- 10 3) 8)) ", env));
     }
 
     @Test 
@@ -245,13 +277,23 @@ public class TestDeclisp {
     }
 
     @Test 
-    public void testArithmet() {
-        Env env = defaultEnv();
-        assertEquals(read("(9 10 11)"), evalRead("(+ (1 2 3) 8)) ", env));
-        assertEquals(read("(9 10 11)"), evalRead("(+ 8 (1 2 3))) ", env));
-        assertEquals(read("(0.2 0.1 0.05)"), evalRead("(/ (5 10 20))) ", env));
-        assertEquals(read("(2.5 5 10)"), evalRead("(/ (5 10 20) 2)) ", env));
-        assertEquals(read("(16 18 20)"), evalRead("(+ (1 2 3) (4) 5 (6 (- 10 3) 8)) ", env));
+    public void testStringBuilder() {
+        String hokke = "𩸽";
+        StringBuilder sb = new StringBuilder();
+        sb.appendCodePoint(Character.codePointAt(hokke, 0));
+        System.out.println(sb);
+        assertEquals(hokke, sb.toString());
     }
 
+    @Test 
+    public void testLetter() {
+        assertTrue(Character.isLetter('漢'));
+        assertTrue(Character.isLetter('あ'));
+        assertTrue(Character.isLetter('ぁ'));
+        assertTrue(Character.isLetter(Character.codePointAt("𩸽", 0)));
+        assertFalse(Character.isLetter("𩸽".charAt(0)));
+        assertFalse(Character.isLetter(Character.codePointAt("😀", 0)));
+        assertFalse(Character.isLetter('１'));
+        assertFalse(Character.isLetter('／'));
+    }
 }

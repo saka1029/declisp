@@ -162,7 +162,7 @@ public class DecLisp {
 
         final java.io.Reader reader;
         final StringBuilder buffer = new StringBuilder();
-        int ch;
+        int ch; // code point (not char)
 
         public Reader(java.io.Reader reader) {
             this.reader = reader;
@@ -173,10 +173,28 @@ public class DecLisp {
             this(new StringReader(source));
         }
 
+        int readCodePoint() throws IOException {
+            int hi = reader.read();
+            if (hi == -1)
+                return -1;
+            if (!Character.isHighSurrogate((char)hi))
+                return hi;
+            int lo = reader.read();
+            if (lo == -1)
+                return -1;
+            if (!Character.isLowSurrogate((char)lo))
+                throw new IOException("readCodePoint: invalid surrogate pair");
+            return Character.toCodePoint((char)hi, (char)lo);
+        }
+
         int get() {
             try {
-                ch = reader.read();
-                buffer.append((char)ch);    // ch == EOFの時もappendする
+                ch = readCodePoint();
+                // ch = reader.read();
+                if (ch == -1)
+                    buffer.append((char)ch);    // ch == EOFの時もappendする
+                else
+                    buffer.appendCodePoint(ch);    // ch == EOFの時もappendする
                 return ch;
             } catch (IOException e) {
                 throw new DecLispException(e);
@@ -189,9 +207,12 @@ public class DecLisp {
         }
 
         void spaces() {
-            while (Character.isWhitespace(ch))
+            int spacePos = 0;
+            while (Character.isWhitespace(ch)) {
+                spacePos = buffer.length();
                 get();
-            buffer.delete(0, buffer.length() - 1);
+            }
+            buffer.delete(0, spacePos);
         }
 
         Expr list() {
@@ -253,7 +274,10 @@ public class DecLisp {
         static boolean isSymbolFirst(int ch) {
             return switch (ch) {
                 case -1, '(', ')' -> false;
-                default -> !Character.isWhitespace(ch) && !isDigit(ch);
+                case '!', '#', '$', '%', '&', '|', '@', '=', '^',
+                    '+', '-', '*', '/', ';', ':', ',', '.',
+                    '_', '<', '>' -> true;
+                default -> Character.isLetter(ch);
             };
         }
 
@@ -289,7 +313,7 @@ public class DecLisp {
             else if (isSymbolFirst(ch))
                 return symbol();
             else 
-                throw new DecLispException("Reader.read(): Unexpected character '%c'", (char)ch);
+                throw new DecLispException("Reader.read(): Unexpected character '0x%x'", ch);
         }
     }
 
@@ -303,15 +327,6 @@ public class DecLisp {
     public static BigDecimal d(Expr e) { return cast(e, Dec.class).value; }
     public static Dec d(BigDecimal v) { return new Dec(v); }
     public static Dec d(double v) { return new Dec(BigDecimal.valueOf(v)); }
-
-    public static List<BigDecimal> asList(Expr e) {
-        List<BigDecimal> result = new ArrayList<>();
-        for (; e instanceof Cons c; e = c.cdr)
-            result.add(d(c.car));
-        if (result.isEmpty())
-            result.add(d(e));
-        return result;
-    }
 
     public static Expr arithmet(Expr evaled, BigDecimal unit, BinaryOperator<BigDecimal> op) {
         if (evaled.equals(NIL))
@@ -350,20 +365,6 @@ public class DecLisp {
         // System.out.println("r=" + print(r));
         return r;
     }
-
-    // static Dec arithmetic(Expr args, BigDecimal start, BinaryOperator<BigDecimal> operator) {
-    //     BigDecimal prev = BigDecimal.ZERO;
-    //     int i = 0;
-    //     for (Expr a = args; a instanceof Cons c; a = c.cdr) {
-    //         BigDecimal value = d(c.car);
-    //         if (i == 1)
-    //             start = prev;
-    //         start = operator.apply(start, value);
-    //         prev = value;
-    //         ++i;
-    //     }
-    //     return d(start);
-    // }
 
     static Bool compare(Expr args, IntPredicate predicate) {
         return b(predicate.test(d(car(args)).compareTo(d(car(cdr(args))))));
@@ -427,10 +428,6 @@ public class DecLisp {
         define(env, sym("cdr"), (Proc) a -> cdr(car(a)));
         define(env, sym("cons"), (Proc) a -> cons(car(a), car(cdr(a))));
         define(env, sym("not"), (Proc) a -> car(a).equals(FALSE) ? TRUE : FALSE);
-        // define(env, sym("+"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.add(y)));
-        // define(env, sym("-"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.subtract(y)));
-        // define(env, sym("*"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.multiply(y)));
-        // define(env, sym("/"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.divide(y, MathContext.DECIMAL128)));
         define(env, sym("+"), (Proc) a -> arithmet(a, BigDecimal.ZERO, (x, y) -> x.add(y)));
         define(env, sym("-"), (Proc) a -> arithmet(a, BigDecimal.ZERO, (x, y) -> x.subtract(y)));
         define(env, sym("*"), (Proc) a -> arithmet(a, BigDecimal.ONE, (x, y) -> x.multiply(y)));
