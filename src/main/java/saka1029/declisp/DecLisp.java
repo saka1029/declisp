@@ -137,9 +137,9 @@ public class DecLisp {
         @Override public final String toString() { return "" + value; }
     }
     public static boolean b(Expr e) { return cast(e, Bool.class).value();}
-    public static Bool b(boolean b) { return b ? TRUE : FALSE; }
-    public static final Bool TRUE = new Bool(true);
-    public static final Bool FALSE = new Bool(false);
+    public static Bool b(boolean b) { return b ? T : F; }
+    public static final Bool T = new Bool(true);
+    public static final Bool F = new Bool(false);
 
     public static String print(Expr e) {
         return switch (e) {
@@ -348,8 +348,8 @@ public class DecLisp {
                 get();
             String value = buffer.stringButLast();
             return switch (value) {
-                case "true" -> DecLisp.TRUE;
-                case "false" -> DecLisp.FALSE;
+                case "T" -> DecLisp.T;
+                case "F" -> DecLisp.F;
                 default -> new Symbol(value);
             };
         }
@@ -443,23 +443,15 @@ public class DecLisp {
         return r;
     }
 
-    static final Converter<BigDecimal> DecConv = new Converter<>() {
-        @Override
-        public BigDecimal type(Expr e) {
-            // return cast(e, Dec.class).value;
-            return d(e);
-        }
-
-        @Override
-        public BigDecimal[] array(int size) {
-            return new BigDecimal[size];
-        }
-
-        @Override
-        public Expr expr(BigDecimal t) {
-            // return new Dec(t);
-            return d(t);
-        }
+    static final Converter<BigDecimal> DEC_CONV = new Converter<>() {
+        @Override public BigDecimal type(Expr e) { return d(e); }
+        @Override public BigDecimal[] array(int size) { return new BigDecimal[size]; }
+        @Override public Expr expr(BigDecimal t) { return d(t); }
+    };
+    static final Converter<Boolean> BOOL_CONV = new Converter<>() {
+        @Override public Boolean type(Expr e) { return b(e); }
+        @Override public Boolean[] array(int size) { return new Boolean[size]; }
+        @Override public Expr expr(Boolean t) { return b(t); }
     };
 
     public static Env defaultEnv() {
@@ -483,28 +475,32 @@ public class DecLisp {
                 return NIL;
         });
         define(env, sym("define"), (Apply)(a, e) -> define(e, sym(car(a)), eval(car(cdr(a)), e)));
-        define(env, sym("and"), (Apply)(a, e) -> {
-            Expr last = TRUE;
+        define(env, sym("&&"), (Apply)(a, e) -> {
+            Expr last = T;
             for (Expr c : a)
-                if ((last = eval(c, e)).equals(FALSE))
+                if ((last = eval(c, e)).equals(F))
                     return last;
             return last;
         });
-        define(env, sym("or"), (Apply)(a, e) -> {
-            Expr last = FALSE;
+        define(env, sym("||"), (Apply)(a, e) -> {
+            Expr last = F;
             for (Expr c : a)
-                if (!(last = eval(c, e)).equals(FALSE))
+                if (!(last = eval(c, e)).equals(F))
                     return last;
             return last;
         });
         define(env, sym("car"), (Proc) a -> car(car(a)));
         define(env, sym("cdr"), (Proc) a -> cdr(car(a)));
         define(env, sym("cons"), (Proc) a -> cons(car(a), car(cdr(a))));
-        define(env, sym("not"), (Proc) a -> car(a).equals(FALSE) ? TRUE : FALSE);
-        define(env, sym("+"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.add(y), DecConv));
-        define(env, sym("-"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.subtract(y), DecConv));
-        define(env, sym("*"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.multiply(y), DecConv));
-        define(env, sym("/"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.divide(y, MathContext.DECIMAL128), DecConv));
+        define(env, sym("not"), (Proc) a -> car(a).equals(F) ? T : F);
+        define(env, sym("!"), (Proc) a -> car(a).equals(F) ? T : F);
+        define(env, sym("+"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.add(y), DEC_CONV));
+        define(env, sym("-"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.subtract(y), DEC_CONV));
+        define(env, sym("*"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.multiply(y), DEC_CONV));
+        define(env, sym("/"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.divide(y, MathContext.DECIMAL128), DEC_CONV));
+        define(env, sym("and"), (Proc) a -> arithmetic(a, true, (x, y) -> x & y, BOOL_CONV));
+        define(env, sym("or"), (Proc) a -> arithmetic(a, false, (x, y) -> x | y, BOOL_CONV));
+        define(env, sym("xor"), (Proc) a -> arithmetic(a, false, (x, y) -> x ^ y, BOOL_CONV));
         define(env, sym("=="), (Proc) a -> compare(a, x -> x == 0));
         define(env, sym("!="), (Proc) a -> compare(a, x -> x != 0));
         define(env, sym("<"), (Proc) a -> compare(a, x -> x < 0));
