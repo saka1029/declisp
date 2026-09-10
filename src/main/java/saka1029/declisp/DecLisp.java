@@ -201,18 +201,27 @@ public class DecLisp {
             }
         }
 
+        String bufferButLast() {
+            int last = buffer.length() - 1;
+            if (last < 0)
+                return "";
+            if (Character.isLowSurrogate(buffer.charAt(last)))
+                --last;
+            return buffer.substring(0, last);
+        }
+
         int getClear() {
             buffer.setLength(0);
             return get();
         }
 
         void spaces() {
-            int spacePos = 0;
+            int lastSpacePos = 0;
             while (Character.isWhitespace(ch)) {
-                spacePos = buffer.length();
+                lastSpacePos = buffer.length();
                 get();
             }
-            buffer.delete(0, spacePos);
+            buffer.delete(0, lastSpacePos);
         }
 
         Expr list() {
@@ -268,7 +277,7 @@ public class DecLisp {
                 while (isDigit(ch))
                     get();
             }
-            return new Dec(new BigDecimal(buffer.substring(0, buffer.length() - 1)));
+            return new Dec(new BigDecimal(bufferButLast()));
         }
 
         static boolean isSymbolFirst(int ch) {
@@ -288,7 +297,7 @@ public class DecLisp {
         Expr symbol() {
             while (isSymbolRest(ch))
                 get();
-            String value = buffer.substring(0, buffer.length() - 1);
+            String value = bufferButLast();
             return switch (value) {
                 case "true" -> DecLisp.TRUE;
                 case "false" -> DecLisp.FALSE;
