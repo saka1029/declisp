@@ -10,7 +10,6 @@ import static saka1029.declisp.DecLisp.*;
 import java.io.IOException;
 
 import org.junit.Test;
-import org.junit.platform.commons.annotation.Testable;
 
 import saka1029.declisp.DecLisp.Apply;
 import saka1029.declisp.DecLisp.Dec;

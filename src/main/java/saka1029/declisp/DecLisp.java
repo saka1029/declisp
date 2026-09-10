@@ -164,10 +164,15 @@ public class DecLisp {
         public void append(int cp) { buffer[next++] = cp; }
         int pop() { return buffer[--next]; }
         public void clear() { next = 0; }
+        public void clearButLast() {
+            int last = pop();
+            next = 0;
+            append(last);
+        }
         public String stringButLast() {
             int last = pop();
             String s = new String(buffer, 0, next);
-            clear();
+            next = 0;
             append(last);
             return s;
         }
@@ -177,7 +182,7 @@ public class DecLisp {
         public static final Expr EOF = new Expr() {};
 
         final java.io.Reader reader;
-        final StringBuilder buffer = new StringBuilder();
+        final CodePointBuffer buffer = new CodePointBuffer();
         int ch; // code point (not char)
 
         public Reader(java.io.Reader reader) {
@@ -207,48 +212,31 @@ public class DecLisp {
             try {
                 ch = readCodePoint();
                 // ch = reader.read();
-                if (ch == -1)
-                    buffer.append((char)ch);    // ch == EOFの時もappendする
-                else
-                    buffer.appendCodePoint(ch);    // ch == EOFの時もappendする
+                buffer.append(ch);    // ch == EOFの時もappendする
                 return ch;
             } catch (IOException e) {
                 throw new DecLispException(e);
             }
         }
 
-        String bufferButLast() {
-            int last = buffer.length() - 1;
-            if (last < 0)
-                return "";
-            if (Character.isLowSurrogate(buffer.charAt(last)))
-                --last;
-            String r = buffer.substring(0, last);
-            buffer.delete(0, last);
-            return r;
-        }
-
-        int getClear() {
-            buffer.setLength(0);
+        int clearGet() {
+            buffer.clear();
             return get();
         }
 
         void spaces() {
-            int lastSpacePos = 0;
-            while (Character.isWhitespace(ch)) {
-                lastSpacePos = buffer.length();
+            while (Character.isWhitespace(ch))
                 get();
-            }
-            buffer.delete(0, lastSpacePos);
+            buffer.clearButLast();
         }
 
         Expr list() {
-            getClear();     // skip '('
+            clearGet();     // skip '('
             List<Expr> list = new ArrayList<>();
             while (true) {
                 spaces();
                 if (ch == ')') {
-                    getClear();  // skip ')'
+                    clearGet();  // skip ')'
                     return DecLisp.list(NIL, list);
                 // no dot pair
                 }
@@ -260,7 +248,7 @@ public class DecLisp {
         }
 
         Expr quote() {
-            getClear();  // skip '\''
+            clearGet();  // skip '\''
             return DecLisp.list(DecLisp.QUOTE, read());
         }
 
@@ -295,7 +283,7 @@ public class DecLisp {
                 while (isDigit(ch))
                     get();
             }
-            return new Dec(new BigDecimal(bufferButLast()));
+            return new Dec(new BigDecimal(buffer.stringButLast()));
         }
 
         static boolean isSymbolFirst(int ch) {
@@ -315,7 +303,7 @@ public class DecLisp {
         Expr symbol() {
             while (isSymbolRest(ch))
                 get();
-            String value = bufferButLast();
+            String value = buffer.stringButLast();
             return switch (value) {
                 case "true" -> DecLisp.TRUE;
                 case "false" -> DecLisp.FALSE;
