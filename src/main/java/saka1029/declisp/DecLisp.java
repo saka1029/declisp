@@ -384,11 +384,9 @@ public class DecLisp {
     public static <T> int matrix(Expr evaled, List<List<T>> mat, Converter<T> conv) {
         int maxRowSize = 0;
         for (Expr c : evaled) {
-            List<T> row = new ArrayList<>();
-            for (Expr d : c)
-                row.add(conv.type(d));
+            List<T> row = c.stream().map(d -> conv.type(d)).toList();
             if (row.isEmpty())
-                row.add(conv.type(c));
+                row = List.of(conv.type(c));
             // System.out.println(row);
             maxRowSize = Math.max(maxRowSize, row.size());
             mat.add(row);
