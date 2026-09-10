@@ -32,7 +32,7 @@ public class TestDeclisp {
 
     @Test 
     public void testCast() {
-        Expr e = d(8);
+        Expr e = dec(8);
         assertEquals(Dec.class, cast(e, Dec.class).getClass());
         try {
             cast(e, Symbol.class);
@@ -43,24 +43,24 @@ public class TestDeclisp {
 
     @Test 
     public void testDec() {
-        assertEquals(d(2), d(2.0));
-        assertNotEquals(d(2), d(2.3));
+        assertEquals(dec(2), dec(2.0));
+        assertNotEquals(dec(2), dec(2.3));
     }
 
     @Test 
     public void testEnv() {
         Env env = new Env();
-        define(env, sym("A"), d(3));
-        assertEquals(d(3), get(env, sym("A")));
-        set(env, sym("A"), d(7));
-        assertEquals(d(7), get(env, sym("A")));
+        define(env, sym("A"), dec(3));
+        assertEquals(dec(3), get(env, sym("A")));
+        set(env, sym("A"), dec(7));
+        assertEquals(dec(7), get(env, sym("A")));
         try {
-            assertEquals(d(3), get(env, sym("F")));
+            assertEquals(dec(3), get(env, sym("F")));
             fail();
         } catch (DecLispException x) {
         }
         try {
-            set(env, sym("F"), d(999));
+            set(env, sym("F"), dec(999));
             fail();
         } catch (DecLispException x) {
         }
@@ -92,25 +92,25 @@ public class TestDeclisp {
     @Test
     public void testEval() {
         Env env = new Env();
-        define(env, sym("a"), d(3));
+        define(env, sym("a"), dec(3));
         assertEquals(list(), eval(NIL, env));
-        assertEquals(d(3), eval(sym("a"), env));
-        assertEquals(d(3), eval(d(3), env));
+        assertEquals(dec(3), eval(sym("a"), env));
+        assertEquals(dec(3), eval(dec(3), env));
         assertEquals(T, eval(T, env));
         assertEquals(F, eval(F, env));
         define(env, sym("+"), (Apply)(a, e) -> {
             Expr evaled = evlis(a, e);
-            return d(d(car(evaled)).add(d(car(cdr(evaled)))));
+            return dec(dec(car(evaled)).add(dec(car(cdr(evaled)))));
         });
-        assertEquals(d(3), eval(list(sym("+"), d(1), d(2)), env));
-        assertEquals(list(d(3), d(1)), eval(list(sym("a"), d(1)), env));
+        assertEquals(dec(3), eval(list(sym("+"), dec(1), dec(2)), env));
+        assertEquals(list(dec(3), dec(1)), eval(list(sym("a"), dec(1)), env));
         try {
             eval(new Expr(){@Override public String toString() { return "UNKNOWN"; }}, env);
             fail();
         } catch (DecLispException x) {
             assertEquals("eval(): Unknown type 'print: unknown type 'UNKNOWN''", x.getMessage());
         }
-        assertEquals(list(T, d(3)), eval(list(T, d(3)), env));
+        assertEquals(list(T, dec(3)), eval(list(T, dec(3)), env));
     }
 
     @Test 
@@ -148,7 +148,7 @@ public class TestDeclisp {
 
     @Test
     public void testReadNoSpaces() {
-        assertEquals(list(d(12), sym("𩸽")), read("(12𩸽)"));
+        assertEquals(list(dec(12), sym("𩸽")), read("(12𩸽)"));
     }
 
     @Test
@@ -159,16 +159,16 @@ public class TestDeclisp {
 
     @Test
     public void testRead() {
-        assertEquals(d(1), read("+1"));
-        assertEquals(d(-1), read("-1"));
-        assertEquals(list(d(1), sym("a")), read("(1 a)"));
-        assertEquals(list(d(1), sym("."), sym("a")), read("(1 . a)"));
+        assertEquals(dec(1), read("+1"));
+        assertEquals(dec(-1), read("-1"));
+        assertEquals(list(dec(1), sym("a")), read("(1 a)"));
+        assertEquals(list(dec(1), sym("."), sym("a")), read("(1 . a)"));
         assertEquals(sym("AB"), read("AB"));
-        assertEquals(d(12.34), read("12.34"));
-        assertEquals(d(1234), read("12.34e2"));
-        assertEquals(d(1234), read("12.34E2"));
-        assertEquals(d(0.1234), read("12.34e-2"));
-        assertEquals(d(1234), read("12.34e+2"));
+        assertEquals(dec(12.34), read("12.34"));
+        assertEquals(dec(1234), read("12.34e2"));
+        assertEquals(dec(1234), read("12.34E2"));
+        assertEquals(dec(0.1234), read("12.34e-2"));
+        assertEquals(dec(1234), read("12.34e+2"));
         assertEquals(sym(","), read(","));
         try {
             read("😀");
@@ -184,19 +184,19 @@ public class TestDeclisp {
         assertEquals("true", print(T));
         assertEquals("false", print(F));
         assertEquals("SYM", print(sym("SYM")));
-        assertEquals("3", print(d(3)));
+        assertEquals("3", print(dec(3)));
         assertEquals("()", print(NIL));
-        assertEquals("'(1)", print(list(QUOTE, list(d(1)))));
+        assertEquals("'(1)", print(list(QUOTE, list(dec(1)))));
         assertEquals("'a", print(list(QUOTE, sym("a"))));
         assertEquals("(quote)", print(list(QUOTE)));
     }
 
     @Test
     public void testCons() {
-        assertEquals("(1)", print(cons(d(1), NIL)));
-        assertEquals("(1 2)", print(cons(d(1), cons(d(2), NIL))));
+        assertEquals("(1)", print(cons(dec(1), NIL)));
+        assertEquals("(1 2)", print(cons(dec(1), cons(dec(2), NIL))));
         try {
-            print(cons(d(1), d(2)));
+            print(cons(dec(1), dec(2)));
             fail();
         } catch (DecLispException x) {
             assertEquals("cons: cannot cons '1' and '2'", x.getMessage());
@@ -209,60 +209,60 @@ public class TestDeclisp {
     @Test
     public void evalRead() {
         Env env = defaultEnv();
-        assertEquals(d(2), evalRead("(if F 1 2)", env));
+        assertEquals(dec(2), evalRead("(if F 1 2)", env));
         assertEquals(NIL, evalRead("(if F 1)", env));
-        assertEquals(d(1), evalRead("(car '(1 a))", env));
+        assertEquals(dec(1), evalRead("(car '(1 a))", env));
         assertEquals(list(sym("."), sym("a")), evalRead("(cdr '(1 . a))", env));
-        assertEquals(list(d(1), d(2)), evalRead("(cons 1 '(2))", env));
+        assertEquals(list(dec(1), dec(2)), evalRead("(cons 1 '(2))", env));
         // Cannot cons any and ATOM
         // assertEquals(cons(d(1), d(2)), evalRead("(cons 1 2)", env));
         assertEquals(F, evalRead("(not (== 0 0))", env));
         assertEquals(sym("a"), evalRead("((lambda (a) (car a)) '(a b))", env));
-        assertEquals(d(6), evalRead("(+ 1 2 3)", env));
-        assertEquals(d(6), evalRead("(+ 1 2 (+ 1 2))", env));
+        assertEquals(dec(6), evalRead("(+ 1 2 3)", env));
+        assertEquals(dec(6), evalRead("(+ 1 2 (+ 1 2))", env));
         // System.out.println(print(evalRead("(-)", env)));
-        assertEquals(d(0), evalRead("(-)", env));
-        assertEquals(d(-1), evalRead("(- 1)", env));
-        assertEquals(d(-4), evalRead("(- 1 2 3)", env));
+        assertEquals(dec(0), evalRead("(-)", env));
+        assertEquals(dec(-1), evalRead("(- 1)", env));
+        assertEquals(dec(-4), evalRead("(- 1 2 3)", env));
         assertEquals(T, evalRead("(== 2 2)", env));
         assertEquals(F, evalRead("(== 0 2)", env));
         define(env, sym("fact"), evalRead("(lambda (n) (if (<= n 0) 1 (* n (fact (- n 1)))))", env));
-        assertEquals(d(1), evalRead("(fact 0)", env));
-        assertEquals(d(1), evalRead("(fact 1)", env));
-        assertEquals(d(2), evalRead("(fact 2)", env));
-        assertEquals(d(6), evalRead("(fact 3)", env));
+        assertEquals(dec(1), evalRead("(fact 0)", env));
+        assertEquals(dec(1), evalRead("(fact 1)", env));
+        assertEquals(dec(2), evalRead("(fact 2)", env));
+        assertEquals(dec(6), evalRead("(fact 3)", env));
         assertEquals(sym("fact2"), evalRead("(define fact2 (lambda (n) (if (<= n 0) 1 (* n (fact (- n 1))))))", env));
-        assertEquals(d(1), evalRead("(fact2 0)", env));
-        assertEquals(d(1), evalRead("(fact2 1)", env));
-        assertEquals(d(2), evalRead("(fact2 2)", env));
-        assertEquals(d(6), evalRead("(fact2 3)", env));
+        assertEquals(dec(1), evalRead("(fact2 0)", env));
+        assertEquals(dec(1), evalRead("(fact2 1)", env));
+        assertEquals(dec(2), evalRead("(fact2 2)", env));
+        assertEquals(dec(6), evalRead("(fact2 3)", env));
         assertEquals(T, evalRead("(&&)", env));
-        assertEquals(d(3), evalRead("(&& 2 3)", env));
+        assertEquals(dec(3), evalRead("(&& 2 3)", env));
         assertEquals(F, evalRead("(&& F 3)", env));
         assertEquals(F, evalRead("(||)", env));
-        assertEquals(d(2), evalRead("(|| 2 3)", env));
-        assertEquals(d(3), evalRead("(|| F 3)", env));
+        assertEquals(dec(2), evalRead("(|| 2 3)", env));
+        assertEquals(dec(3), evalRead("(|| F 3)", env));
     }
 
     @Test 
     public void testArithmetic() {
         Env env = defaultEnv();
-        assertEquals(d(0), evalRead("(+)", env));
-        assertEquals(d(2), evalRead("(+ 2)", env));
-        assertEquals(d(3), evalRead("(+ 1 2)", env));
-        assertEquals(d(6), evalRead("(+ 1 2 3)", env));
-        assertEquals(d(0), evalRead("(-)", env));
-        assertEquals(d(-2), evalRead("(- 2)", env));
-        assertEquals(d(-1), evalRead("(- 1 2)", env));
-        assertEquals(d(-4), evalRead("(- 1 2 3)", env));
-        assertEquals(d(1), evalRead("(*)", env));
-        assertEquals(d(2), evalRead("(* 2)", env));
-        assertEquals(d(2), evalRead("(* 1 2)", env));
-        assertEquals(d(8), evalRead("(* 1 2 4)", env));
-        assertEquals(d(1), evalRead("(/)", env));
-        assertEquals(d(0.5), evalRead("(/ 2)", env));
-        assertEquals(d(0.25), evalRead("(/ 1 4)", env));
-        assertEquals(d(4), evalRead("(/ 24 2 3)", env));
+        assertEquals(dec(0), evalRead("(+)", env));
+        assertEquals(dec(2), evalRead("(+ 2)", env));
+        assertEquals(dec(3), evalRead("(+ 1 2)", env));
+        assertEquals(dec(6), evalRead("(+ 1 2 3)", env));
+        assertEquals(dec(0), evalRead("(-)", env));
+        assertEquals(dec(-2), evalRead("(- 2)", env));
+        assertEquals(dec(-1), evalRead("(- 1 2)", env));
+        assertEquals(dec(-4), evalRead("(- 1 2 3)", env));
+        assertEquals(dec(1), evalRead("(*)", env));
+        assertEquals(dec(2), evalRead("(* 2)", env));
+        assertEquals(dec(2), evalRead("(* 1 2)", env));
+        assertEquals(dec(8), evalRead("(* 1 2 4)", env));
+        assertEquals(dec(1), evalRead("(/)", env));
+        assertEquals(dec(0.5), evalRead("(/ 2)", env));
+        assertEquals(dec(0.25), evalRead("(/ 1 4)", env));
+        assertEquals(dec(4), evalRead("(/ 24 2 3)", env));
         assertEquals(read("(9 10 11)"), evalRead("(+ (1 2 3) 8)) ", env));
         assertEquals(read("(9 10 11)"), evalRead("(+ 8 (1 2 3))) ", env));
         assertEquals(read("(0.2 0.1 0.05)"), evalRead("(/ (5 10 20))) ", env));

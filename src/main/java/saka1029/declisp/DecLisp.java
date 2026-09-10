@@ -129,15 +129,15 @@ public class DecLisp {
             return value.toString().replaceFirst("\\.0$", "");
         }
     }
-    public static BigDecimal d(Expr e) { return cast(e, Dec.class).value; }
-    public static Dec d(BigDecimal v) { return new Dec(v); }
-    public static Dec d(double v) { return new Dec(BigDecimal.valueOf(v)); }
+    public static BigDecimal dec(Expr e) { return cast(e, Dec.class).value; }
+    public static Dec dec(BigDecimal v) { return new Dec(v); }
+    public static Dec dec(double v) { return new Dec(BigDecimal.valueOf(v)); }
 
     public record Bool(boolean value) implements Expr {
         @Override public final String toString() { return "" + value; }
     }
-    public static boolean b(Expr e) { return cast(e, Bool.class).value();}
-    public static Bool b(boolean b) { return b ? T : F; }
+    public static boolean bool(Expr e) { return cast(e, Bool.class).value();}
+    public static Bool bool(boolean b) { return b ? T : F; }
     public static final Bool T = new Bool(true);
     public static final Bool F = new Bool(false);
 
@@ -381,22 +381,26 @@ public class DecLisp {
         Expr expr(T t);
     }
 
-    public static <T> Expr arithmetic(Expr evaled, T unit, BinaryOperator<T> op, Converter<T> conv) {
-        if (evaled.equals(NIL))
-            return conv.expr(unit);
-        List<List<T>> mat = new ArrayList<>();
+    public static <T> int matrix(Expr evaled, List<List<T>> mat, Converter<T> conv) {
         int maxRowSize = 0;
         for (Expr c : evaled) {
             List<T> row = new ArrayList<>();
-            for (Expr f = c; f instanceof Cons d; f = d.cdr) {
-                row.add(conv.type(d.car));
-            }
+            for (Expr d : c)
+                row.add(conv.type(d));
             if (row.isEmpty())
                 row.add(conv.type(c));
             // System.out.println(row);
             maxRowSize = Math.max(maxRowSize, row.size());
             mat.add(row);
         }
+        return maxRowSize;
+    }
+
+    public static <T> Expr arithmetic(Expr evaled, T unit, BinaryOperator<T> op, Converter<T> conv) {
+        if (evaled.equals(NIL))
+            return conv.expr(unit);
+        List<List<T>> mat = new ArrayList<>();
+        int maxRowSize = matrix(evaled, mat, conv);
         // System.out.println(maxRowSize);
         T[] result = conv.array(maxRowSize);
         Arrays.fill(result, unit);
@@ -420,7 +424,7 @@ public class DecLisp {
     }
 
     static Bool compare(Expr args, IntPredicate predicate) {
-        return b(predicate.test(d(car(args)).compareTo(d(car(cdr(args))))));
+        return bool(predicate.test(dec(car(args)).compareTo(dec(car(cdr(args))))));
     }
 
     public static Expr evlis(Expr args, Env env) {
@@ -444,20 +448,20 @@ public class DecLisp {
     }
 
     static final Converter<BigDecimal> DEC_CONV = new Converter<>() {
-        @Override public BigDecimal type(Expr e) { return d(e); }
+        @Override public BigDecimal type(Expr e) { return dec(e); }
         @Override public BigDecimal[] array(int size) { return new BigDecimal[size]; }
-        @Override public Expr expr(BigDecimal t) { return d(t); }
+        @Override public Expr expr(BigDecimal t) { return dec(t); }
     };
     static final Converter<Boolean> BOOL_CONV = new Converter<>() {
-        @Override public Boolean type(Expr e) { return b(e); }
+        @Override public Boolean type(Expr e) { return bool(e); }
         @Override public Boolean[] array(int size) { return new Boolean[size]; }
-        @Override public Expr expr(Boolean t) { return b(t); }
+        @Override public Expr expr(Boolean t) { return bool(t); }
     };
 
     public static Env defaultEnv() {
         Env env = new Env();
-        define(env, QUOTE, (Apply)(a, e) -> (car((a))));
-        define(env, sym("lambda"), (Apply)(a, e) -> {
+        define(env, QUOTE, (Apply) (a, e) -> (car((a))));
+        define(env, sym("lambda"), (Apply) (a, e) -> {
             Expr parms = car(a), body = cdr(a);
             return (Apply)(aa, ee) -> {
                 Env n = new Env(e);
@@ -465,8 +469,8 @@ public class DecLisp {
                 return progn(body, n);
             };
         });
-        define(env, sym("if"), (Apply)(a, e) -> {
-            boolean p = b(eval(car(a), e));
+        define(env, sym("if"), (Apply) (a, e) -> {
+            boolean p = bool(eval(car(a), e));
             if (p)
                 return eval(car(cdr(a)), e);
             else if (!cdr(cdr(a)).equals(NIL))
@@ -474,15 +478,17 @@ public class DecLisp {
             else
                 return NIL;
         });
-        define(env, sym("define"), (Apply)(a, e) -> define(e, sym(car(a)), eval(car(cdr(a)), e)));
-        define(env, sym("&&"), (Apply)(a, e) -> {
+        define(env, sym("define"), (Apply) (a, e) -> define(e, sym(car(a)), eval(car(cdr(a)), e)));
+        // conditional AND
+        define(env, sym("&&"), (Apply) (a, e) -> {
             Expr last = T;
             for (Expr c : a)
                 if ((last = eval(c, e)).equals(F))
                     return last;
             return last;
         });
-        define(env, sym("||"), (Apply)(a, e) -> {
+        // conditional OR
+        define(env, sym("||"), (Apply) (a, e) -> {
             Expr last = F;
             for (Expr c : a)
                 if (!(last = eval(c, e)).equals(F))
