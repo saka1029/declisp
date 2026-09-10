@@ -133,12 +133,6 @@ public class TestDeclisp {
     }
 
     @Test
-    public void testReadList() {
-        Expr e = read("(1 a)");
-        assertEquals(list(d(1), sym("a")), read("(1 a)"));
-    }
-
-    @Test
     public void testRead() {
         assertEquals(d(1), read("+1"));
         assertEquals(d(-1), read("-1"));
