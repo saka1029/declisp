@@ -2,6 +2,7 @@ package saka1029.declisp;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
@@ -377,8 +378,14 @@ public class DecLisp {
 
     interface Converter<T> {
         Class<T> clazz();
-        T[] array(int size);
-        T[][] matrix(int size);
+        @SuppressWarnings("unchecked")
+        default T[] array(int size) {
+            return (T[])Array.newInstance(clazz(), size);
+        }
+        @SuppressWarnings("unchecked")
+        default T[][] matrix(int size) {
+            return (T[][]) Array.newInstance(clazz(), size, 0);
+        }
         Expr construct(T t);
         default boolean isInstance(Expr e) { return clazz().isInstance(e); }
         T cast(Expr e);
@@ -396,15 +403,11 @@ public class DecLisp {
     }
     static final Converter<BigDecimal> DEC_CONV = new Converter<>() {
         @Override public Class<BigDecimal> clazz() { return BigDecimal.class; }
-        @Override public BigDecimal[] array(int size) { return new BigDecimal[size]; }
-        @Override public BigDecimal[][] matrix(int size) { return new BigDecimal[size][]; }
         @Override public Expr construct(BigDecimal t) { return dec(t); }
         @Override public BigDecimal cast(Expr e) { return dec(e); }
     };
     static final Converter<Boolean> BOOL_CONV = new Converter<>() {
         @Override public Class<Boolean> clazz() { return Boolean.class; }
-        @Override public Boolean[] array(int size) { return new Boolean[size]; }
-        @Override public Boolean[][] matrix(int size) { return new Boolean[size][]; }
         @Override public Expr construct(Boolean t) { return bool(t); }
         @Override public Boolean cast(Expr e) { return bool(e); }
     };
