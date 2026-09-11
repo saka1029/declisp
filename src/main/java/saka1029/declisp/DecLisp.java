@@ -376,17 +376,45 @@ public class DecLisp {
     }
 
     interface Converter<T> {
-        T type(Expr e);
+        Class<T> clazz();
         T[] array(int size);
-        Expr expr(T t);
+        T[][] matrix(int size);
+        Expr construct(T t);
+        default boolean isInstance(Expr e) { return clazz().isInstance(e); }
+        T cast(Expr e);
+        default T[] array(Expr e) {
+            T[] result = e.stream().map(x -> cast(x)).toArray(x -> array(x));
+            if (result.length == 0) {
+                result = array(1);
+                result[0] = cast(e);
+            }
+            return result;
+        }
+        default T[][] matrix(Expr e) {
+            return e.stream().map(x -> array(x)).toArray(x -> matrix(x));
+        }
     }
+    static final Converter<BigDecimal> DEC_CONV = new Converter<>() {
+        @Override public Class<BigDecimal> clazz() { return BigDecimal.class; }
+        @Override public BigDecimal[] array(int size) { return new BigDecimal[size]; }
+        @Override public BigDecimal[][] matrix(int size) { return new BigDecimal[size][]; }
+        @Override public Expr construct(BigDecimal t) { return dec(t); }
+        @Override public BigDecimal cast(Expr e) { return dec(e); }
+    };
+    static final Converter<Boolean> BOOL_CONV = new Converter<>() {
+        @Override public Class<Boolean> clazz() { return Boolean.class; }
+        @Override public Boolean[] array(int size) { return new Boolean[size]; }
+        @Override public Boolean[][] matrix(int size) { return new Boolean[size][]; }
+        @Override public Expr construct(Boolean t) { return bool(t); }
+        @Override public Boolean cast(Expr e) { return bool(e); }
+    };
 
     public static <T> int matrix(Expr evaled, List<List<T>> mat, Converter<T> conv) {
         int maxRowSize = 0;
         for (Expr c : evaled) {
-            List<T> row = c.stream().map(d -> conv.type(d)).toList();
+            List<T> row = c.stream().map(d -> conv.cast(d)).toList();
             if (row.isEmpty())
-                row = List.of(conv.type(c));
+                row = List.of(conv.cast(c));
             // System.out.println(row);
             maxRowSize = Math.max(maxRowSize, row.size());
             mat.add(row);
@@ -396,16 +424,16 @@ public class DecLisp {
 
     public static <T> Expr arithmetic(Expr evaled, T unit, BinaryOperator<T> op, Converter<T> conv) {
         if (evaled.equals(NIL))
-            return conv.expr(unit);
-        List<List<T>> mat = new ArrayList<>();
-        int maxRowSize = matrix(evaled, mat, conv);
+            return conv.construct(unit);
+        T[][] mat = conv.matrix(evaled);
+        int maxRowSize = Stream.of(mat).mapToInt(row -> row.length).max().getAsInt();
         // System.out.println(maxRowSize);
         T[] result = conv.array(maxRowSize);
         Arrays.fill(result, unit);
         for (int c = 0; c < maxRowSize; ++c) {
             T prev = null;
-            for (int r = 0, rmax = mat.size(); r < rmax; ++r) {
-                T adder = mat.get(r).get(c >= mat.get(r).size() ? 0 : c);
+            for (int r = 0, rmax = mat.length; r < rmax; ++r) {
+                T adder = mat[r][c >= mat[r].length ? 0 : c];
                 if (r == 1)
                     result[c] = prev;
                 result[c] = op.apply(result[c], adder);
@@ -413,11 +441,10 @@ public class DecLisp {
             }
         }
         if (maxRowSize == 1)
-            return conv.expr(result[0]);
+            return conv.construct(result[0]);
         Expr r = NIL;
         for (int i = maxRowSize - 1; i >= 0; --i)
-            r = cons(conv.expr(result[i]), r);
-        // System.out.println("r=" + print(r));
+            r = cons(conv.construct(result[i]), r);
         return r;
     }
 
@@ -444,17 +471,6 @@ public class DecLisp {
             r = eval(c, env);
         return r;
     }
-
-    static final Converter<BigDecimal> DEC_CONV = new Converter<>() {
-        @Override public BigDecimal type(Expr e) { return dec(e); }
-        @Override public BigDecimal[] array(int size) { return new BigDecimal[size]; }
-        @Override public Expr expr(BigDecimal t) { return dec(t); }
-    };
-    static final Converter<Boolean> BOOL_CONV = new Converter<>() {
-        @Override public Boolean type(Expr e) { return bool(e); }
-        @Override public Boolean[] array(int size) { return new Boolean[size]; }
-        @Override public Expr expr(Boolean t) { return bool(t); }
-    };
 
     public static Env defaultEnv() {
         Env env = new Env();
