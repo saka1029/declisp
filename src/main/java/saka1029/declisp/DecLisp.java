@@ -378,6 +378,8 @@ public class DecLisp {
 
     interface Converter<T> {
         Class<T> clazz();
+        Expr construct(T t);
+        T cast(Expr e);
         @SuppressWarnings("unchecked")
         default T[] array(int size) {
             return (T[])Array.newInstance(clazz(), size);
@@ -386,9 +388,7 @@ public class DecLisp {
         default T[][] matrix(int size) {
             return (T[][]) Array.newInstance(clazz(), size, 0);
         }
-        Expr construct(T t);
         default boolean isInstance(Expr e) { return clazz().isInstance(e); }
-        T cast(Expr e);
         default T[] array(Expr e) {
             T[] result = e.stream().map(x -> cast(x)).toArray(x -> array(x));
             if (result.length == 0) {
