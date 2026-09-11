@@ -330,6 +330,11 @@ public class TestDeclisp {
             {BigDecimal.valueOf(1), BigDecimal.valueOf(2), BigDecimal.valueOf(3)},
             {BigDecimal.valueOf(4)},
             {BigDecimal.valueOf(5), BigDecimal.valueOf(6), BigDecimal.valueOf(7)},
+        }, DEC_CONV.matrix(read("((1 2 3) (4) (5 6 7))")));
+        assertArrayEquals(new BigDecimal[][] {
+            {BigDecimal.valueOf(1), BigDecimal.valueOf(2), BigDecimal.valueOf(3)},
+            {BigDecimal.valueOf(4)},
+            {BigDecimal.valueOf(5), BigDecimal.valueOf(6), BigDecimal.valueOf(7)},
         }, DEC_CONV.matrix(read("((1 2 3) 4 (5 6 7))")));
 
     }
