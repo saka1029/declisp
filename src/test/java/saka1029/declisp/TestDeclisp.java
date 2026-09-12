@@ -1,5 +1,6 @@
 package saka1029.declisp;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -327,5 +328,20 @@ public class TestDeclisp {
         assertEquals(list(T, F, F, F), evalRead("(and (T T F F) (T F T F))", env));
         assertEquals(list(T, T, T, F), evalRead("(or (T T F F) (T F T F))", env));
         assertEquals(list(F, T, T, F), evalRead("(xor (T T F F) (T F T F))", env));
+    }
+
+    @Test 
+    public void testConverter() {
+        assertArrayEquals(new BigDecimal[][] {
+            {BigDecimal.valueOf(1), BigDecimal.valueOf(2), BigDecimal.valueOf(3)},
+            {BigDecimal.valueOf(4)},
+            {BigDecimal.valueOf(5), BigDecimal.valueOf(6), BigDecimal.valueOf(7)},
+        }, DEC_CONV.matrix(read("((1 2 3) (4) (5 6 7))")));
+        assertArrayEquals(new BigDecimal[][] {
+            {BigDecimal.valueOf(1), BigDecimal.valueOf(2), BigDecimal.valueOf(3)},
+            {BigDecimal.valueOf(4)},
+            {BigDecimal.valueOf(5), BigDecimal.valueOf(6), BigDecimal.valueOf(7)},
+        }, DEC_CONV.matrix(read("((1 2 3) 4 (5 6 7))")));
+
     }
 }
