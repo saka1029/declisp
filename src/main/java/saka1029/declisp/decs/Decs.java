@@ -1,5 +1,6 @@
 package saka1029.declisp.decs;
 
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.Arrays;
 // import java.util.function.BinaryOperator;
@@ -48,12 +49,22 @@ public class Decs {
         return result;
     };
 
-    interface Converter<T> {
-        T[] array(T arg);
-        T[] array(int size);
+    interface Constructor<T> {
+        Class<T> clazz();
+
+        default T[] array(T arg) {
+            T[] result = array(1);
+            result[0] = arg;
+            return result;
+        }
+
+        @SuppressWarnings("unchecked")
+        default T[] array(int size) {
+            return (T[])Array.newInstance(clazz(), size);
+        }
     }
 
-    public static <T> T[] arithmetic(T[][] mat, T unit, BinaryOperator<T> op, Converter<T> conv) {
+    public static <T> T[] arithmetic(T[][] mat, T unit, BinaryOperator<T> op, Constructor<T> conv) {
         if (mat.length == 0)
             return conv.array(unit);
         int maxRowSize = Stream.of(mat).mapToInt(row -> row.length).max().getAsInt();
@@ -69,8 +80,6 @@ public class Decs {
                 prev = adder;
             }
         }
-        // if (maxRowSize == 1)
-        //     return conv.array(result[0]);
         return result;
     }
 
