@@ -344,4 +344,10 @@ public class TestDeclisp {
         }, DEC_CONV.matrix(read("((1 2 3) 4 (5 6 7))")));
 
     }
+
+    @Test 
+    public void testPolyAdd() {
+        assertEquals(read("(1 2 2)"), polyAdd(read("((1 1) (1 1 1))")));
+        assertEquals(read("(1 2 3)"), polyAdd(read("((1 1) 1 (1 1 1))")));
+    }
 }
