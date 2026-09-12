@@ -423,19 +423,6 @@ public class DecLisp {
         @Override public Boolean cast(Expr e) { return bool(e); }
     };
 
-    // public static <T> int matrix(Expr evaled, List<List<T>> mat, Converter<T> conv) {
-    //     int maxRowSize = 0;
-    //     for (Expr c : evaled) {
-    //         List<T> row = c.stream().map(d -> conv.cast(d)).toList();
-    //         if (row.isEmpty())
-    //             row = List.of(conv.cast(c));
-    //         // System.out.println(row);
-    //         maxRowSize = Math.max(maxRowSize, row.size());
-    //         mat.add(row);
-    //     }
-    //     return maxRowSize;
-    // }
-
     public static BinaryOperator<BigDecimal[]> DECS_ADD = (left, right) -> {
         if (left.length < right.length) {
             BigDecimal[] t = left; left = right; right = t;
