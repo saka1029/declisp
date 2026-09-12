@@ -345,19 +345,28 @@ public class TestDeclisp {
 
     }
 
-    @Test 
-    public void testPolyAdd() {
-        assertEquals(read("()"), polyAdd(read("()")));
-        assertEquals(read("(1 2 2)"), polyAdd(read("((1 1) (1 1 1))")));
-        assertEquals(read("(1 2 3)"), polyAdd(read("((1 1) 1 (1 1 1))")));
+    static BigDecimal[] darray(String s) {
+        return DEC_CONV.array(read(s));
     }
 
     @Test 
-    public void testPolyMult() {
-        assertEquals(read("()"), polyMult(read("()")));
-        assertEquals(read("(3 3)"), polyMult(read("((1 1) 3)")));
-        assertEquals(read("(1 2 1)"), polyMult(read("((1 1) (1 1))")));
-        assertEquals(read("(3 6 3)"), polyMult(read("((3 3) (1 1))")));
-        assertEquals(read("(3 6 3)"), polyMult(read("((1 1) 3 (1 1))")));
+    public void testDecsAdd() {
+        assertArrayEquals(darray("(1 2)"), decsAdd(darray("1"), darray("(1 1)")));
+    }
+
+    @Test 
+    public void testDecsMult() {
+        assertArrayEquals(darray("(2 2)"), decsMult(darray("2"), darray("(1 1)")));
+        assertArrayEquals(darray("(1 2 1)"), decsMult(darray("(1 1)"), darray("(1 1)")));
+    }
+
+    @Test 
+    public void testPoly() {
+        assertEquals(read("()"), poly(read("()"), DecLisp::decsAdd));
+        assertEquals(read("(1 2 2)"), poly(read("((1 1) (1 1 1))"), DecLisp::decsAdd));
+        assertEquals(read("(1 2 3)"), poly(read("((1 1) 1 (1 1 1))"), DecLisp::decsAdd));
+        assertEquals(read("()"), poly(read("()"), DecLisp::decsMult));
+        assertEquals(read("(1 2 1)"), poly(read("((1 1) (1 1))"), DecLisp::decsMult));
+        assertEquals(read("(2 4 2)"), poly(read("((1 1) 2 (1 1))"), DecLisp::decsMult));
     }
 }

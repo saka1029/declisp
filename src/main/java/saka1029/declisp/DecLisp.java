@@ -436,37 +436,33 @@ public class DecLisp {
     //     return maxRowSize;
     // }
 
-    public static Expr polyAdd(Expr args) {
-        if (args.equals(NIL))
-            return NIL;
-        BigDecimal[][] mat = DEC_CONV.matrix(args);
-        int resultLength = Stream.of(mat).mapToInt(x -> x.length).max().getAsInt();
-        BigDecimal[] result = new BigDecimal[resultLength];
-        Arrays.fill(result, BigDecimal.ZERO);
-        for (BigDecimal[] row : mat)
-            for (int x = row.length - 1, y = resultLength - 1; x >= 0; --x, --y)
-                result[y] = result[y].add(row[x]);
-        return DEC_CONV.expr(result);
-    }
+    public static BigDecimal[] decsAdd(BigDecimal[] left, BigDecimal[] right) {
+        int ll = left.length, rl = right.length;
+        if (ll < rl)
+            return decsAdd(right, left);
+        BigDecimal[] result = left.clone();
+        for (int i = ll - 1, j = rl - 1; j >= 0; --i, --j)
+            result[i] = result[i].add(right[j]);
+        return result;
+    };
 
-    public static Expr polyMult(Expr args) {
+    public static BigDecimal[] decsMult(BigDecimal[] left, BigDecimal[] right) {
+        int ll = left.length, rl = right.length;
+        BigDecimal[] result = new BigDecimal[ll + rl -1];
+        Arrays.fill(result, BigDecimal.ZERO);
+        for (int i = 0; i < ll; ++i)
+            for (int j = 0, k = i; j < rl; ++j, ++k)
+                result[k] = result[k].add(left[i].multiply(right[j]));
+        return result;
+    };
+
+    public static Expr poly(Expr args, BinaryOperator<BigDecimal[]> operator) {
         if (args.equals(NIL))
             return NIL;
         BigDecimal[][] mat = DEC_CONV.matrix(args);
-        int rows = mat.length;
-        int resultLength = Stream.of(mat).mapToInt(x -> x.length - 1).sum() + 1;
-        BigDecimal[] result = new BigDecimal[resultLength];
-        Arrays.fill(result, BigDecimal.ZERO);
-        for (int r = 0; r < rows; ++r) {
-            BigDecimal[] rr = mat[r];
-            BigDecimal[] resultCopy = Arrays.copyOf(result, resultLength);
-            for (int x = resultLength - 1; x >= 0; --x)
-                for (int y = rr.length - 1; y >= 0; --y)
-                    if (resultLength - x - y - 1 >= 0)
-                        resultCopy[resultLength - x - y - 1] = result[x].multiply(rr[y]);
-            for (int x = resultLength - 1; x >= 0; --x)
-                result[x] = result[x].add(resultCopy[x]);
-        }
+        BigDecimal[] result = mat[0];
+        for (int i = 1, len = mat.length; i < len; ++i)
+            result = operator.apply(result, mat[i]);
         return DEC_CONV.expr(result);
     }
 
