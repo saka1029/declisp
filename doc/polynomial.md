@@ -1,6 +1,19 @@
 # polynomial演算
 
 1元多項式の演算
+Xの1元n項式
+
+$$Σ(Ki * X^i)$$
+
+ただし
+
+$$i=n, \space n-1, \space ... \space 0$$
+
+を
+
+$$(K_n \space K_{n-1} \space K_{n-2}  \space ... \space K_0)$$
+と表す。
+
 
 ## 加算(p+)
 
@@ -9,6 +22,11 @@
 ```
 
 結果の次数は最大次数と同じになる。
+
+$$ length(C) = max( length(V_i) ) $$
+ただし
+$$ C = (p+ \space V_1 \space V_2 \space ...\space V_n) $$
+
 右端を揃えて加算する。
 
 ```
@@ -30,3 +48,7 @@
 
 m元はm - 1次なので、
 (p* m元 n元)の結果は(m - 1) + (n - 1) + 1元(=m + n - 1元)になる。
+
+$$ length(C) = (\sum length(V_i) - 1) + 1 $$
+ただし
+$$ C = (p* \space V_1 \space V_2 \space ...\space V_n) $$
