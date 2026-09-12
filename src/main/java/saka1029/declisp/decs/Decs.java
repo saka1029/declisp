@@ -11,44 +11,6 @@ public class Decs {
 
     private Decs() {}
 
-    // static BigDecimal unary(BigDecimal[] left, BigDecimal unit, BinaryOperator<BigDecimal> operator) {
-    //     BigDecimal result = unit, prev = null;
-    //     int i = 0;
-    //     for (BigDecimal e : left) {
-    //         if (i == 1)
-    //             result = prev;
-    //         result = operator.apply(result, e);
-    //         prev = e;
-    //         ++i;
-    //     }
-    //     return result;
-    // }
-
-    // public static BigDecimal add(BigDecimal[] left) {
-    //     return unary(left, BigDecimal.ZERO, BigDecimal::add);
-    // }
-
-    public static BigDecimal[] add(BigDecimal[] left, BigDecimal[] right) {
-        if (left.length < right.length) {
-            BigDecimal[] t = left; left = right; right = t;
-        }
-        int ll = left.length, rl = right.length;
-        BigDecimal[] result = left.clone();
-        for (int i = ll - 1, j = rl - 1; j >= 0; --i, --j)
-            result[i] = result[i].add(right[j]);
-        return result;
-    }
-
-    public static BigDecimal[]  mult(BigDecimal[] left, BigDecimal[] right) {
-        int ll = left.length, rl = right.length;
-        BigDecimal[] result = new BigDecimal[ll + rl - 1];
-        Arrays.fill(result, BigDecimal.ZERO);
-        for (int i = 0; i < ll; ++i)
-            for (int j = 0, k = i; j < rl; ++j, ++k)
-                result[k] = result[k].add(left[i].multiply(right[j]));
-        return result;
-    };
-
     @SuppressWarnings("unchecked")
     static <T> T[] array(Class<T> clazz, int size) {
         return (T[])Array.newInstance(clazz, 1);
@@ -59,7 +21,37 @@ public class Decs {
         return e;
     }
 
-    public static <T> T[] arithmetic(T[][] mat, T unit, BinaryOperator<T> op, Class<T> clazz) {
+    public static BigDecimal[] polinomialAdd(BigDecimal[] left, BigDecimal[] right) {
+        if (left.length < right.length) {
+            BigDecimal[] t = left; left = right; right = t;
+        }
+        int ll = left.length, rl = right.length;
+        BigDecimal[] result = left.clone();
+        for (int i = ll - 1, j = rl - 1; j >= 0; --i, --j)
+            result[i] = result[i].add(right[j]);
+        return result;
+    }
+
+    public static BigDecimal[]  polinomialMult(BigDecimal[] left, BigDecimal[] right) {
+        int ll = left.length, rl = right.length;
+        BigDecimal[] result = new BigDecimal[ll + rl - 1];
+        Arrays.fill(result, BigDecimal.ZERO);
+        for (int i = 0; i < ll; ++i)
+            for (int j = 0, k = i; j < rl; ++j, ++k)
+                result[k] = result[k].add(left[i].multiply(right[j]));
+        return result;
+    };
+
+    public static <T> T[] polynomial(T[][] mat, BinaryOperator<T[]> operator, Class<T> clazz) {
+        if (mat.length == 0)
+            return array();
+        T[] result = mat[0];
+        for (int i = 1, len = mat.length; i < len; ++i)
+            result = operator.apply(result, mat[i]);
+        return result;
+    }
+
+    public static <T> T[] arithmetic(T[][] mat, T unit, BinaryOperator<T> operator, Class<T> clazz) {
         if (mat.length == 0)
             return array(unit);
         int maxRowSize = Stream.of(mat).mapToInt(row -> row.length).max().getAsInt();
@@ -71,7 +63,7 @@ public class Decs {
                 T adder = mat[r][c >= mat[r].length ? 0 : c];
                 if (r == 1)
                     result[c] = prev;
-                result[c] = op.apply(result[c], adder);
+                result[c] = operator.apply(result[c], adder);
                 prev = adder;
             }
         }
