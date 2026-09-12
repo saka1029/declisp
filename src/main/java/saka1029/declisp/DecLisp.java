@@ -130,6 +130,11 @@ public class DecLisp {
         }
     }
     public static BigDecimal dec(Expr e) { return cast(e, Dec.class).value; }
+    // public static BigDecimal[] decArray(Expr e) {
+    //     return e.stream()
+    //         .map(x -> cast(x, Dec.class).value)
+    //         .toArray(BigDecimal[]::new);
+    // }
     public static Dec dec(BigDecimal v) { return new Dec(v); }
     public static Dec dec(double v) { return new Dec(BigDecimal.valueOf(v)); }
 

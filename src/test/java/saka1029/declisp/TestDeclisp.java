@@ -8,6 +8,7 @@ import static org.junit.Assert.fail;
 import static saka1029.declisp.DecLisp.*;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 
 import org.junit.Test;
 
@@ -312,6 +313,12 @@ public class TestDeclisp {
         assertFalse(Character.isLetter(Character.codePointAt("😀", 0)));
         assertFalse(Character.isLetter('１'));
         assertFalse(Character.isLetter('／'));
+    }
+
+    @Test 
+    public void testString() {
+        BigDecimal b = new BigDecimal(65535);
+        assertEquals("ffff", b.toBigInteger().toString(16));
     }
 
     @Test 
