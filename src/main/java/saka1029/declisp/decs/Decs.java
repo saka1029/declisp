@@ -49,26 +49,21 @@ public class Decs {
         return result;
     };
 
-    interface Constructor<T> {
-        Class<T> clazz();
-
-        default T[] array(T arg) {
-            T[] result = array(1);
-            result[0] = arg;
-            return result;
-        }
-
-        @SuppressWarnings("unchecked")
-        default T[] array(int size) {
-            return (T[])Array.newInstance(clazz(), size);
-        }
+    @SuppressWarnings("unchecked")
+    static <T> T[] array(Class<T> clazz, int size) {
+        return (T[])Array.newInstance(clazz, 1);
     }
 
-    public static <T> T[] arithmetic(T[][] mat, T unit, BinaryOperator<T> op, Constructor<T> conv) {
+    @SafeVarargs
+    static <T> T[] array(T... e) {
+        return e;
+    }
+
+    public static <T> T[] arithmetic(T[][] mat, T unit, BinaryOperator<T> op, Class<T> clazz) {
         if (mat.length == 0)
-            return conv.array(unit);
+            return array(unit);
         int maxRowSize = Stream.of(mat).mapToInt(row -> row.length).max().getAsInt();
-        T[] result = conv.array(maxRowSize);
+        T[] result = array(clazz, maxRowSize);
         Arrays.fill(result, unit);
         for (int c = 0; c < maxRowSize; ++c) {
             T prev = null;
