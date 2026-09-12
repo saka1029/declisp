@@ -347,7 +347,17 @@ public class TestDeclisp {
 
     @Test 
     public void testPolyAdd() {
+        assertEquals(read("()"), polyAdd(read("()")));
         assertEquals(read("(1 2 2)"), polyAdd(read("((1 1) (1 1 1))")));
         assertEquals(read("(1 2 3)"), polyAdd(read("((1 1) 1 (1 1 1))")));
+    }
+
+    @Test 
+    public void testPolyMult() {
+        assertEquals(read("()"), polyMult(read("()")));
+        assertEquals(read("(3 3)"), polyMult(read("((1 1) 3)")));
+        assertEquals(read("(1 2 1)"), polyMult(read("((1 1) (1 1))")));
+        assertEquals(read("(3 6 3)"), polyMult(read("((3 3) (1 1))")));
+        assertEquals(read("(3 6 3)"), polyMult(read("((1 1) 3 (1 1))")));
     }
 }

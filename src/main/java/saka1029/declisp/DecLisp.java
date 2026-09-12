@@ -449,6 +449,27 @@ public class DecLisp {
         return DEC_CONV.expr(result);
     }
 
+    public static Expr polyMult(Expr args) {
+        if (args.equals(NIL))
+            return NIL;
+        BigDecimal[][] mat = DEC_CONV.matrix(args);
+        int rows = mat.length;
+        int resultLength = Stream.of(mat).mapToInt(x -> x.length - 1).sum() + 1;
+        BigDecimal[] result = new BigDecimal[resultLength];
+        Arrays.fill(result, BigDecimal.ZERO);
+        for (int r = 0; r < rows; ++r) {
+            BigDecimal[] rr = mat[r];
+            BigDecimal[] resultCopy = Arrays.copyOf(result, resultLength);
+            for (int x = resultLength - 1; x >= 0; --x)
+                for (int y = rr.length - 1; y >= 0; --y)
+                    if (resultLength - x - y - 1 >= 0)
+                        resultCopy[resultLength - x - y - 1] = result[x].multiply(rr[y]);
+            for (int x = resultLength - 1; x >= 0; --x)
+                result[x] = result[x].add(resultCopy[x]);
+        }
+        return DEC_CONV.expr(result);
+    }
+
     public static <T> Expr arithmetic(Expr args, T unit, BinaryOperator<T> op, Converter<T> conv) {
         if (args.equals(NIL))
             return conv.construct(unit);
