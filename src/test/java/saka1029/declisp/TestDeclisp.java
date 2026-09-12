@@ -344,30 +344,4 @@ public class TestDeclisp {
         }, DEC_CONV.matrix(read("((1 2 3) 4 (5 6 7))")));
 
     }
-
-    static BigDecimal[] darray(String s) {
-        return DEC_CONV.array(read(s));
-    }
-
-    @Test 
-    public void testDecsAdd() {
-        assertArrayEquals(darray("(1 2)"), DECS_ADD.apply(darray("1"), darray("(1 1)")));
-        assertArrayEquals(darray("(1 1 4)"), DECS_ADD.apply(darray("(1 0 3)"), darray("(1 1)")));
-    }
-
-    @Test 
-    public void testDecsMult() {
-        assertArrayEquals(darray("(2 2)"), DECS_MULT.apply(darray("2"), darray("(1 1)")));
-        assertArrayEquals(darray("(1 2 1)"), DECS_MULT.apply(darray("(1 1)"), darray("(1 1)")));
-    }
-
-    @Test 
-    public void testPoly() {
-        assertEquals(read("()"), poly(read("()"), DECS_ADD));
-        assertEquals(read("(1 2 2)"), poly(read("((1 1) (1 1 1))"), DECS_ADD));
-        assertEquals(read("(1 2 3)"), poly(read("((1 1) 1 (1 1 1))"), DECS_ADD));
-        assertEquals(read("()"), poly(read("()"), DECS_MULT));
-        assertEquals(read("(1 2 1)"), poly(read("((1 1) (1 1))"), DECS_MULT));
-        assertEquals(read("(2 4 2)"), poly(read("((1 1) 2 (1 1))"), DECS_MULT));
-    }
 }

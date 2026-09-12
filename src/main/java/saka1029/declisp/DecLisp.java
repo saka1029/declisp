@@ -405,12 +405,6 @@ public class DecLisp {
         default T[][] matrix(Expr e) {
             return e.stream().map(x -> array(x)).toArray(x -> matrix(x));
         }
-        default Expr expr(T[] array) {
-            Expr result = NIL;
-            for (int i = array.length - 1; i >= 0; --i)
-                result = cons(construct(array[i]), result);
-            return result;
-        }
     }
     static final Converter<BigDecimal> DEC_CONV = new Converter<>() {
         @Override public Class<BigDecimal> clazz() { return BigDecimal.class; }
@@ -423,40 +417,23 @@ public class DecLisp {
         @Override public Boolean cast(Expr e) { return bool(e); }
     };
 
-    public static BinaryOperator<BigDecimal[]> DECS_ADD = (left, right) -> {
-        if (left.length < right.length) {
-            BigDecimal[] t = left; left = right; right = t;
+    public static <T> int matrix(Expr evaled, List<List<T>> mat, Converter<T> conv) {
+        int maxRowSize = 0;
+        for (Expr c : evaled) {
+            List<T> row = c.stream().map(d -> conv.cast(d)).toList();
+            if (row.isEmpty())
+                row = List.of(conv.cast(c));
+            // System.out.println(row);
+            maxRowSize = Math.max(maxRowSize, row.size());
+            mat.add(row);
         }
-        int ll = left.length, rl = right.length;
-        BigDecimal[] result = left.clone();
-        for (int i = ll - 1, j = rl - 1; j >= 0; --i, --j)
-            result[i] = result[i].add(right[j]);
-        return result;
-    };
-    public static BinaryOperator<BigDecimal[]> DECS_MULT = (left, right) -> {
-        int ll = left.length, rl = right.length;
-        BigDecimal[] result = new BigDecimal[ll + rl - 1];
-        Arrays.fill(result, BigDecimal.ZERO);
-        for (int i = 0; i < ll; ++i)
-            for (int j = 0, k = i; j < rl; ++j, ++k)
-                result[k] = result[k].add(left[i].multiply(right[j]));
-        return result;
-    };
-
-    public static Expr poly(Expr args, BinaryOperator<BigDecimal[]> operator) {
-        if (args.equals(NIL))
-            return NIL;
-        BigDecimal[][] mat = DEC_CONV.matrix(args);
-        BigDecimal[] result = mat[0];
-        for (int i = 1, len = mat.length; i < len; ++i)
-            result = operator.apply(result, mat[i]);
-        return DEC_CONV.expr(result);
+        return maxRowSize;
     }
 
-    public static <T> Expr arithmetic(Expr args, T unit, BinaryOperator<T> op, Converter<T> conv) {
-        if (args.equals(NIL))
+    public static <T> Expr arithmetic(Expr evaled, T unit, BinaryOperator<T> op, Converter<T> conv) {
+        if (evaled.equals(NIL))
             return conv.construct(unit);
-        T[][] mat = conv.matrix(args);
+        T[][] mat = conv.matrix(evaled);
         int maxRowSize = Stream.of(mat).mapToInt(row -> row.length).max().getAsInt();
         // System.out.println(maxRowSize);
         T[] result = conv.array(maxRowSize);
@@ -473,7 +450,10 @@ public class DecLisp {
         }
         if (maxRowSize == 1)
             return conv.construct(result[0]);
-        return conv.expr(result);
+        Expr r = NIL;
+        for (int i = maxRowSize - 1; i >= 0; --i)
+            r = cons(conv.construct(result[i]), r);
+        return r;
     }
 
     static Bool compare(Expr args, IntPredicate predicate) {
