@@ -448,7 +448,7 @@ public class DecLisp {
 
     public static BigDecimal[] decsMult(BigDecimal[] left, BigDecimal[] right) {
         int ll = left.length, rl = right.length;
-        BigDecimal[] result = new BigDecimal[ll + rl -1];
+        BigDecimal[] result = new BigDecimal[ll + rl - 1];
         Arrays.fill(result, BigDecimal.ZERO);
         for (int i = 0; i < ll; ++i)
             for (int j = 0, k = i; j < rl; ++j, ++k)
