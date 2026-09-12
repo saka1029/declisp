@@ -436,17 +436,17 @@ public class DecLisp {
     //     return maxRowSize;
     // }
 
-    public static BigDecimal[] decsAdd(BigDecimal[] left, BigDecimal[] right) {
+    public static BinaryOperator<BigDecimal[]> DECS_ADD = (left, right) -> {
+        if (left.length < right.length) {
+            BigDecimal[] t = left; left = right; right = t;
+        }
         int ll = left.length, rl = right.length;
-        if (ll < rl)
-            return decsAdd(right, left);
         BigDecimal[] result = left.clone();
         for (int i = ll - 1, j = rl - 1; j >= 0; --i, --j)
             result[i] = result[i].add(right[j]);
         return result;
     };
-
-    public static BigDecimal[] decsMult(BigDecimal[] left, BigDecimal[] right) {
+    public static BinaryOperator<BigDecimal[]> DECS_MULT = (left, right) -> {
         int ll = left.length, rl = right.length;
         BigDecimal[] result = new BigDecimal[ll + rl - 1];
         Arrays.fill(result, BigDecimal.ZERO);
