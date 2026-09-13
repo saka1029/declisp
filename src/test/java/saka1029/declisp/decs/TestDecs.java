@@ -1,6 +1,5 @@
 package saka1029.declisp.decs;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
