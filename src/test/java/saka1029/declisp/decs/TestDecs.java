@@ -1,5 +1,6 @@
 package saka1029.declisp.decs;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.math.BigDecimal;
@@ -51,5 +52,21 @@ public class TestDecs {
         assertEq(arr(4, 5), arithmetic(mat(arr(1, 2), arr(3)), BigDecimal.ZERO, (a, b) -> a.add(b), BigDecimal.class));
         assertEq(arr(5, 7, 9), arithmetic(mat(arr(1, 2, 3), arr(4, 5, 6)), BigDecimal.ZERO, (a, b) -> a.add(b), BigDecimal.class));
         assertEq(arr(12, 14, 16), arithmetic(mat(arr(1, 2, 3), arr(4, 5, 6), arr(7)), BigDecimal.ZERO, (a, b) -> a.add(b), BigDecimal.class));
+        try {
+            arithmetic(mat(arr(1, 2, 3), arr(4, 5)), BigDecimal.ZERO, (a, b) -> a.add(b), BigDecimal.class);
+            fail();
+        } catch (DecsException e) {
+            assertEquals("illegal row length 2", e.getMessage());
+        }
+    }
+
+    @Test 
+    public void testPolynomialAdd() {
+        assertEq(arr(), polynomial(mat(arr()), Decs::polynomialAdd, BigDecimal.class));
+        assertEq(arr(1, 2), polynomial(mat(arr(1, 2)), Decs::polynomialAdd, BigDecimal.class));
+        assertEq(arr(1, 5), polynomial(mat(arr(1, 2), arr(3)), Decs::polynomialAdd, BigDecimal.class));
+        assertEq(arr(5, 7, 9), polynomial(mat(arr(1, 2, 3), arr(4, 5, 6)), Decs::polynomialAdd, BigDecimal.class));
+        assertEq(arr(5, 7, 16), polynomial(mat(arr(1, 2, 3), arr(4, 5, 6), arr(7)), Decs::polynomialAdd, BigDecimal.class));
+        assertEq(arr(1,6,8), polynomial(mat(arr(1, 2, 3), arr(4, 5)), Decs::polynomialAdd, BigDecimal.class));
     }
 }

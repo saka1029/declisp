@@ -3,7 +3,6 @@ package saka1029.declisp.decs;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.Arrays;
-// import java.util.function.BinaryOperator;
 import java.util.function.BinaryOperator;
 import java.util.stream.Stream;
 
@@ -11,6 +10,15 @@ public class Decs {
 
     private Decs() {}
 
+    public static class DecsException extends RuntimeException {
+        public DecsException(String format, Object... args) {
+            super(format.formatted(args));
+        }
+        public DecsException(Throwable t) {
+            super(t);
+        }
+
+    }
     @SuppressWarnings("unchecked")
     static <T> T[] array(Class<T> clazz, int size) {
         return (T[])Array.newInstance(clazz, size);
@@ -21,7 +29,7 @@ public class Decs {
         return e;
     }
 
-    public static BigDecimal[] polinomialAdd(BigDecimal[] left, BigDecimal[] right) {
+    public static BigDecimal[] polynomialAdd(BigDecimal[] left, BigDecimal[] right) {
         if (left.length < right.length) {
             BigDecimal[] t = left; left = right; right = t;
         }
@@ -32,7 +40,7 @@ public class Decs {
         return result;
     }
 
-    public static BigDecimal[]  polinomialMult(BigDecimal[] left, BigDecimal[] right) {
+    public static BigDecimal[]  polynomialMult(BigDecimal[] left, BigDecimal[] right) {
         int ll = left.length, rl = right.length;
         BigDecimal[] result = new BigDecimal[ll + rl - 1];
         Arrays.fill(result, BigDecimal.ZERO);
@@ -55,6 +63,11 @@ public class Decs {
         if (mat.length == 0)
             return array(unit);
         int maxRowSize = Stream.of(mat).mapToInt(row -> row.length).max().getAsInt();
+        for (T[] e : mat) {
+            int length = e.length;
+            if (length != 1 && length != maxRowSize)
+                throw new DecsException("illegal row length %d", length);
+        }
         T[] result = array(clazz, maxRowSize);
         Arrays.fill(result, unit);
         for (int c = 0; c < maxRowSize; ++c) {
