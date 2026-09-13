@@ -13,7 +13,7 @@ public class Decs {
 
     @SuppressWarnings("unchecked")
     static <T> T[] array(Class<T> clazz, int size) {
-        return (T[])Array.newInstance(clazz, 1);
+        return (T[])Array.newInstance(clazz, size);
     }
 
     @SafeVarargs
