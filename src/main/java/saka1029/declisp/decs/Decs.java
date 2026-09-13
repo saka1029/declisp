@@ -2,6 +2,7 @@ package saka1029.declisp.decs;
 
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.Arrays;
 import java.util.function.BinaryOperator;
 import java.util.stream.Stream;
@@ -9,6 +10,33 @@ import java.util.stream.Stream;
 public class Decs {
 
     private Decs() {}
+
+    public static MathContext MC = MathContext.DECIMAL128;
+
+    public static BigDecimal add(BigDecimal a, BigDecimal b) { return a.add(b, MC); }
+    public static BigDecimal multiply(BigDecimal a, BigDecimal b) { return a.multiply(b, MC); }
+    public static BigDecimal divide(BigDecimal a, BigDecimal b) { return a.divide(b, MC); }
+    public static boolean equal(BigDecimal a, BigDecimal b) { return a.compareTo(b) == 0; }
+    public static boolean equal(BigDecimal[] a, BigDecimal[] b) {
+        int length = a.length;
+        if (b.length != length)
+            return false;
+        for (int i = 0; i < length; ++i)
+            if (!equal(a[i], b[i]))
+                return false;
+        return true;
+    }
+    public static BigDecimal dec(double value) { return BigDecimal.valueOf(value); }
+    public static BigDecimal[] decs(double... values) {
+        int length = values.length;
+        BigDecimal[] result = new BigDecimal[length];
+        for (int i = 0; i < length; ++i)
+            result[i] = BigDecimal.valueOf(values[i]);
+        return result;
+    }
+    public static BigDecimal[][] matrix(BigDecimal[]... decs) {
+        return decs;
+    }
 
     public static class DecsException extends RuntimeException {
         public DecsException(String format, Object... args) {
@@ -36,7 +64,7 @@ public class Decs {
         int ll = left.length, rl = right.length;
         BigDecimal[] result = left.clone();
         for (int i = ll - 1, j = rl - 1; j >= 0; --i, --j)
-            result[i] = result[i].add(right[j]);
+            result[i] = add(result[i], right[j]);
         return result;
     }
 
@@ -46,7 +74,7 @@ public class Decs {
         Arrays.fill(result, BigDecimal.ZERO);
         for (int i = 0; i < ll; ++i)
             for (int j = 0, k = i; j < rl; ++j, ++k)
-                result[k] = result[k].add(left[i].multiply(right[j]));
+                result[k] = add(result[k], multiply(left[i], right[j]));
         return result;
     };
 
@@ -82,5 +110,4 @@ public class Decs {
         }
         return result;
     }
-
 }
