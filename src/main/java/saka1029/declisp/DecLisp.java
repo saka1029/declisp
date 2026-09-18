@@ -27,27 +27,6 @@ public class DecLisp {
     public static boolean bool(Expr e) { return e.cast(Bool.class).value;}
     public static Bool bool(boolean b) { return b ? Bool.T : Bool.F; }
 
-    // public static Expr eval(Expr e, Env env) {
-    //     return switch (e) {
-    //         case Symbol s -> env.get(s);
-    //         case Bool b -> b;
-    //         case Dec d -> d;
-    //         case Nil n -> n;
-    //         case Cons c -> {
-    //             Expr head = eval(c.car(), env);
-    //             if (head instanceof Apply app)
-    //                 yield app.apply(c.cdr(), env);
-    //             else if (head instanceof Dec)   // リストの先頭が数字ならevlisする
-    //                 yield cons(head, c.cdr().evlis(env));
-    //             else if (head instanceof Bool)   // リストの先頭が真偽値ならevlisする
-    //                 yield cons(head, c.cdr().evlis(env));
-    //             else
-    //                 throw new DecLispException("eval(): Cannot apply '%s' to '%s'", head, c.cdr());
-    //         }
-    //         default -> throw new DecLispException("eval(): Unknown type '%s'", e);
-    //     };
-    // }
-
     public static Expr list(Expr... list) {
         Expr r = Nil.NIL;
         for (int i = list.length - 1; i >= 0; --i)

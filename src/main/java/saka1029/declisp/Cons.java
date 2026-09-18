@@ -9,6 +9,13 @@ public record Cons(Expr car, Expr cdr) implements Expr {
         this.cdr = cdr;
     }
 
+    public static Expr list(Expr... list) {
+        Expr r = Nil.NIL;
+        for (int i = list.length - 1; i >= 0; --i)
+            r = new Cons(list[i], r);
+        return r;
+    }
+
     @Override
     public Expr eval(Env env) {
         Expr head = car.eval(env);
