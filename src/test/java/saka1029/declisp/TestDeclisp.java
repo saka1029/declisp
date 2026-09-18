@@ -1,6 +1,5 @@
 package saka1029.declisp;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -303,8 +302,7 @@ public class TestDeclisp {
 
     @Test 
     public void testString() {
-        BigDecimal b = new BigDecimal(65535);
-        assertEquals("ffff", b.toBigInteger().toString(16));
+        assertEquals("ffff", bdec(65535).toBigInteger().toString(16));
     }
 
     @Test 
@@ -317,16 +315,10 @@ public class TestDeclisp {
 
     @Test 
     public void testConverter() {
-        assertArrayEquals(new BigDecimal[][] {
-            {BigDecimal.valueOf(1), BigDecimal.valueOf(2), BigDecimal.valueOf(3)},
-            {BigDecimal.valueOf(4)},
-            {BigDecimal.valueOf(5), BigDecimal.valueOf(6), BigDecimal.valueOf(7)},
-        }, Converter.DEC.matrix(read("((1 2 3) (4) (5 6 7))")));
-        assertArrayEquals(new BigDecimal[][] {
-            {BigDecimal.valueOf(1), BigDecimal.valueOf(2), BigDecimal.valueOf(3)},
-            {BigDecimal.valueOf(4)},
-            {BigDecimal.valueOf(5), BigDecimal.valueOf(6), BigDecimal.valueOf(7)},
-        }, Converter.DEC.matrix(read("((1 2 3) 4 (5 6 7))")));
+        assertTrue(equal(new BigDecimal[][] { bdecs(1, 2, 3), bdecs(4), bdecs(5, 6, 7) },
+            Converter.DEC.matrix(read("((1 2 3) (4) (5 6 7))"))));
+        assertTrue(equal(new BigDecimal[][] { bdecs(1, 2, 3), bdecs(4), bdecs(5, 6, 7) },
+            Converter.DEC.matrix(read("((1 2 3) 4 (5 6 7))"))));
 
     }
 }

@@ -42,7 +42,7 @@ public class DecLisp {
         return true;
     }
     public static BigDecimal bdec(double v) { return BigDecimal.valueOf(v); }
-    public static BigDecimal[] bdec(double... v) {
+    public static BigDecimal[] bdecs(double... v) {
         BigDecimal[] result = new BigDecimal[v.length];
         for (int i = 0, size = v.length; i < size; ++i)
             result[i] = BigDecimal.valueOf(v[i]);

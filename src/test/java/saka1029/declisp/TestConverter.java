@@ -18,8 +18,8 @@ public class TestConverter {
         assertTrue(bdec(123).compareTo(Converter.DEC.single(dec(123))) == 0);
         assertArrayEquals(new BigDecimal[3], Converter.DEC.array(3));
         assertArrayEquals(new BigDecimal[3][0], Converter.DEC.matrix(3));
-        assertArrayEquals(bdec(3, 4), Converter.DEC.array(list(dec(3), dec(4))));
-        assertTrue(equal(new BigDecimal[][] {bdec(1, 2), bdec(3, 4)}, Converter.DEC.matrix(list(list(dec(1), dec(2)), list(dec(3), dec(4))))));
+        assertArrayEquals(bdecs(3, 4), Converter.DEC.array(list(dec(3), dec(4))));
+        assertTrue(equal(new BigDecimal[][] {bdecs(1, 2), bdecs(3, 4)}, Converter.DEC.matrix(list(list(dec(1), dec(2)), list(dec(3), dec(4))))));
     }
 
 }
