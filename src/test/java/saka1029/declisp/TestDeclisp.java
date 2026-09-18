@@ -14,12 +14,7 @@ import java.math.BigDecimal;
 import org.junit.Test;
 
 import saka1029.declisp.DecLisp.Apply;
-import saka1029.declisp.DecLisp.Dec;
-import saka1029.declisp.DecLisp.DecLispException;
-import saka1029.declisp.DecLisp.Env;
-import saka1029.declisp.DecLisp.Expr;
 import saka1029.declisp.DecLisp.Reader;
-import saka1029.declisp.DecLisp.Symbol;
 
 /**
  * (1) Listでドット記法は許さない。
@@ -52,17 +47,17 @@ public class TestDeclisp {
     @Test 
     public void testEnv() {
         Env env = new Env();
-        define(env, sym("A"), dec(3));
-        assertEquals(dec(3), get(env, sym("A")));
-        set(env, sym("A"), dec(7));
-        assertEquals(dec(7), get(env, sym("A")));
+        env.define(sym("A"), dec(3));
+        assertEquals(dec(3), env.get(sym("A")));
+        env.set(sym("A"), dec(7));
+        assertEquals(dec(7), env.get(sym("A")));
         try {
-            assertEquals(dec(3), get(env, sym("F")));
+            assertEquals(dec(3), env.get(sym("F")));
             fail();
         } catch (DecLispException x) {
         }
         try {
-            set(env, sym("F"), dec(999));
+            env.set(sym("F"), dec(999));
             fail();
         } catch (DecLispException x) {
         }
@@ -94,13 +89,13 @@ public class TestDeclisp {
     @Test
     public void testEval() {
         Env env = new Env();
-        define(env, sym("a"), dec(3));
-        assertEquals(list(), eval(NIL, env));
+        env.define(sym("a"), dec(3));
+        assertEquals(list(), eval(Nil.NIL, env));
         assertEquals(dec(3), eval(sym("a"), env));
         assertEquals(dec(3), eval(dec(3), env));
-        assertEquals(T, eval(T, env));
-        assertEquals(F, eval(F, env));
-        define(env, sym("+"), (Apply)(a, e) -> {
+        assertEquals(Bool.T, eval(Bool.T, env));
+        assertEquals(Bool.F, eval(Bool.F, env));
+        env.define(sym("+"), (Apply)(a, e) -> {
             Expr evaled = evlis(a, e);
             return dec(dec(car(evaled)).add(dec(car(cdr(evaled)))));
         });
@@ -110,28 +105,28 @@ public class TestDeclisp {
             eval(new Expr(){@Override public String toString() { return "UNKNOWN"; }}, env);
             fail();
         } catch (DecLispException x) {
-            assertEquals("eval(): Unknown type 'print: unknown type 'UNKNOWN''", x.getMessage());
+            assertEquals("eval(): Unknown type 'UNKNOWN'", x.getMessage());
         }
-        assertEquals(list(T, dec(3)), eval(list(T, dec(3)), env));
+        assertEquals(list(Bool.T, dec(3)), eval(list(Bool.T, dec(3)), env));
     }
 
     @Test 
     public void testEvalAndOr() {
         Env env = defaultEnv();
-        assertEquals(F, evalRead("(not T)", env));
-        assertEquals(T, evalRead("(not F)", env));
-        assertEquals(T, evalRead("(&&)", env));
-        assertEquals(T, evalRead("(&& T)", env));
-        assertEquals(T, evalRead("(&& T T)", env));
-        assertEquals(F, evalRead("(&& T F)", env));
-        assertEquals(F, evalRead("(&& F T)", env));
-        assertEquals(F, evalRead("(&& F F)", env));
-        assertEquals(F, evalRead("(||)", env));
-        assertEquals(T, evalRead("(|| T)", env));
-        assertEquals(T, evalRead("(|| T T)", env));
-        assertEquals(T, evalRead("(|| T F)", env));
-        assertEquals(T, evalRead("(|| F T)", env));
-        assertEquals(F, evalRead("(|| F F)", env));
+        assertEquals(Bool.F, evalRead("(not T)", env));
+        assertEquals(Bool.T, evalRead("(not F)", env));
+        assertEquals(Bool.T, evalRead("(&&)", env));
+        assertEquals(Bool.T, evalRead("(&& T)", env));
+        assertEquals(Bool.T, evalRead("(&& T T)", env));
+        assertEquals(Bool.F, evalRead("(&& T F)", env));
+        assertEquals(Bool.F, evalRead("(&& F T)", env));
+        assertEquals(Bool.F, evalRead("(&& F F)", env));
+        assertEquals(Bool.F, evalRead("(||)", env));
+        assertEquals(Bool.T, evalRead("(|| T)", env));
+        assertEquals(Bool.T, evalRead("(|| T T)", env));
+        assertEquals(Bool.T, evalRead("(|| T F)", env));
+        assertEquals(Bool.T, evalRead("(|| F T)", env));
+        assertEquals(Bool.F, evalRead("(|| F F)", env));
 
     }
 
@@ -183,27 +178,26 @@ public class TestDeclisp {
 
     @Test 
     public void testPrint() {
-        assertEquals("true", print(T));
-        assertEquals("false", print(F));
-        assertEquals("SYM", print(sym("SYM")));
-        assertEquals("3", print(dec(3)));
-        assertEquals("()", print(NIL));
-        assertEquals("'(1)", print(list(QUOTE, list(dec(1)))));
-        assertEquals("'a", print(list(QUOTE, sym("a"))));
-        assertEquals("(quote)", print(list(QUOTE)));
+        assertEquals("T", Bool.T.toString());
+        assertEquals("F", Bool.F.toString());
+        assertEquals("SYM", sym("SYM").toString());
+        assertEquals("3", dec(3).toString());
+        assertEquals("()", Nil.NIL.toString());
+        assertEquals("'(1)", list(Symbol.QUOTE, list(dec(1))).toString());
+        assertEquals("'a", list(Symbol.QUOTE, sym("a")).toString());
+        assertEquals("(quote)", list(Symbol.QUOTE).toString());
     }
 
     @Test
     public void testCons() {
-        assertEquals("(1)", print(cons(dec(1), NIL)));
-        assertEquals("(1 2)", print(cons(dec(1), cons(dec(2), NIL))));
+        assertEquals("(1)", cons(dec(1), Nil.NIL).toString());
+        assertEquals("(1 2)", cons(dec(1), cons(dec(2), Nil.NIL)).toString());
         try {
-            print(cons(dec(1), dec(2)));
+            cons(dec(1), dec(2)).toString();
             fail();
         } catch (DecLispException x) {
             assertEquals("cons: cannot cons '1' and '2'", x.getMessage());
         }
-        assertEquals("print: unknown type 'UNKNOWN'", print(new Expr(){@Override public String toString() { return "UNKNOWN"; }}));
     }
 
     static Expr evalRead(String s, Env e) { return eval(read(s), e); }
@@ -212,13 +206,13 @@ public class TestDeclisp {
     public void evalRead() {
         Env env = defaultEnv();
         assertEquals(dec(2), evalRead("(if F 1 2)", env));
-        assertEquals(NIL, evalRead("(if F 1)", env));
+        assertEquals(Nil.NIL, evalRead("(if F 1)", env));
         assertEquals(dec(1), evalRead("(car '(1 a))", env));
         assertEquals(list(sym("."), sym("a")), evalRead("(cdr '(1 . a))", env));
         assertEquals(list(dec(1), dec(2)), evalRead("(cons 1 '(2))", env));
         // Cannot cons any and ATOM
         // assertEquals(cons(d(1), d(2)), evalRead("(cons 1 2)", env));
-        assertEquals(F, evalRead("(not (== 0 0))", env));
+        assertEquals(Bool.F, evalRead("(not (== 0 0))", env));
         assertEquals(sym("a"), evalRead("((lambda (a) (car a)) '(a b))", env));
         assertEquals(dec(6), evalRead("(+ 1 2 3)", env));
         assertEquals(dec(6), evalRead("(+ 1 2 (+ 1 2))", env));
@@ -226,9 +220,9 @@ public class TestDeclisp {
         assertEquals(dec(0), evalRead("(-)", env));
         assertEquals(dec(-1), evalRead("(- 1)", env));
         assertEquals(dec(-4), evalRead("(- 1 2 3)", env));
-        assertEquals(T, evalRead("(== 2 2)", env));
-        assertEquals(F, evalRead("(== 0 2)", env));
-        define(env, sym("fact"), evalRead("(lambda (n) (if (<= n 0) 1 (* n (fact (- n 1)))))", env));
+        assertEquals(Bool.T, evalRead("(== 2 2)", env));
+        assertEquals(Bool.F, evalRead("(== 0 2)", env));
+        env.define(sym("fact"), evalRead("(lambda (n) (if (<= n 0) 1 (* n (fact (- n 1)))))", env));
         assertEquals(dec(1), evalRead("(fact 0)", env));
         assertEquals(dec(1), evalRead("(fact 1)", env));
         assertEquals(dec(2), evalRead("(fact 2)", env));
@@ -238,10 +232,10 @@ public class TestDeclisp {
         assertEquals(dec(1), evalRead("(fact2 1)", env));
         assertEquals(dec(2), evalRead("(fact2 2)", env));
         assertEquals(dec(6), evalRead("(fact2 3)", env));
-        assertEquals(T, evalRead("(&&)", env));
+        assertEquals(Bool.T, evalRead("(&&)", env));
         assertEquals(dec(3), evalRead("(&& 2 3)", env));
-        assertEquals(F, evalRead("(&& F 3)", env));
-        assertEquals(F, evalRead("(||)", env));
+        assertEquals(Bool.F, evalRead("(&& F 3)", env));
+        assertEquals(Bool.F, evalRead("(||)", env));
         assertEquals(dec(2), evalRead("(|| 2 3)", env));
         assertEquals(dec(3), evalRead("(|| F 3)", env));
     }
@@ -275,24 +269,24 @@ public class TestDeclisp {
     @Test 
     public void testCompare() {
         Env env = defaultEnv();
-        assertEquals(F, evalRead("(== 1 0)", env));
-        assertEquals(T, evalRead("(== 0 0)", env));
-        assertEquals(F, evalRead("(== 0 1)", env));
-        assertEquals(T, evalRead("(!= 1 0)", env));
-        assertEquals(F, evalRead("(!= 0 0)", env));
-        assertEquals(T, evalRead("(!= 0 1)", env));
-        assertEquals(F, evalRead("(< 1 0)", env));
-        assertEquals(F, evalRead("(< 0 0)", env));
-        assertEquals(T, evalRead("(< 0 1)", env));
-        assertEquals(F, evalRead("(<= 1 0)", env));
-        assertEquals(T, evalRead("(<= 0 0)", env));
-        assertEquals(T, evalRead("(<= 0 1)", env));
-        assertEquals(T, evalRead("(> 1 0)", env));
-        assertEquals(F, evalRead("(> 0 0)", env));
-        assertEquals(F, evalRead("(> 0 1)", env));
-        assertEquals(T, evalRead("(>= 1 0)", env));
-        assertEquals(T, evalRead("(>= 0 0)", env));
-        assertEquals(F, evalRead("(>= 0 1)", env));
+        assertEquals(Bool.F, evalRead("(== 1 0)", env));
+        assertEquals(Bool.T, evalRead("(== 0 0)", env));
+        assertEquals(Bool.F, evalRead("(== 0 1)", env));
+        assertEquals(Bool.T, evalRead("(!= 1 0)", env));
+        assertEquals(Bool.F, evalRead("(!= 0 0)", env));
+        assertEquals(Bool.T, evalRead("(!= 0 1)", env));
+        assertEquals(Bool.F, evalRead("(< 1 0)", env));
+        assertEquals(Bool.F, evalRead("(< 0 0)", env));
+        assertEquals(Bool.T, evalRead("(< 0 1)", env));
+        assertEquals(Bool.F, evalRead("(<= 1 0)", env));
+        assertEquals(Bool.T, evalRead("(<= 0 0)", env));
+        assertEquals(Bool.T, evalRead("(<= 0 1)", env));
+        assertEquals(Bool.T, evalRead("(> 1 0)", env));
+        assertEquals(Bool.F, evalRead("(> 0 0)", env));
+        assertEquals(Bool.F, evalRead("(> 0 1)", env));
+        assertEquals(Bool.T, evalRead("(>= 1 0)", env));
+        assertEquals(Bool.T, evalRead("(>= 0 0)", env));
+        assertEquals(Bool.F, evalRead("(>= 0 1)", env));
     }
 
     @Test 
@@ -325,9 +319,9 @@ public class TestDeclisp {
     @Test 
     public void testEvalLogicalAndOr() {
         Env env = defaultEnv();
-        assertEquals(list(T, F, F, F), evalRead("(and (T T F F) (T F T F))", env));
-        assertEquals(list(T, T, T, F), evalRead("(or (T T F F) (T F T F))", env));
-        assertEquals(list(F, T, T, F), evalRead("(xor (T T F F) (T F T F))", env));
+        assertEquals(list(Bool.T, Bool.F, Bool.F, Bool.F), evalRead("(and (T T F F) (T F T F))", env));
+        assertEquals(list(Bool.T, Bool.T, Bool.T, Bool.F), evalRead("(or (T T F F) (T F T F))", env));
+        assertEquals(list(Bool.F, Bool.T, Bool.T, Bool.F), evalRead("(xor (T T F F) (T F T F))", env));
     }
 
     @Test 

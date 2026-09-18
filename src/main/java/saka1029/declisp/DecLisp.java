@@ -7,156 +7,50 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.function.BinaryOperator;
 import java.util.function.IntPredicate;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public class DecLisp {
 
     private DecLisp(){}
 
-    public static class DecLispException extends RuntimeException {
-        public DecLispException(String format, Object... args) {
-            super(format.formatted(args));
-        }
-        public DecLispException(Throwable cause) {
-            super(cause);
-        }
-    }
+    public static MathContext MC = MathContext.DECIMAL128;
 
-    public interface Expr extends Iterable<Expr> {
-        default Stream<Expr> stream() {
-            return StreamSupport.stream(spliterator(), false);
-        }
-        @Override default Iterator<Expr> iterator() {
-            return new Iterator<>() {
-                Expr expr = Expr.this;
+    public static Expr car(Expr e) { return cast(e, Cons.class).car(); }
+    public static Expr cdr(Expr e) { return cast(e, Cons.class).cdr(); }
 
-                @Override
-                public boolean hasNext() {
-                    return expr instanceof Cons;
-                }
-
-                @Override
-                public Expr next() {
-                    if (expr instanceof Cons c) {
-                        expr = c.cdr;
-                        return c.car;
-                    } else
-                        throw new NoSuchElementException();
-                }
-            };
-        }
-    }
-    public static Expr car(Expr e) { return cast(e, Cons.class).car; }
-    public static Expr cdr(Expr e) { return cast(e, Cons.class).cdr; }
-
-    public record Symbol(String name) implements Expr {
-        @Override public final String toString() { return name; }
-    }
-    public static final Symbol QUOTE = new Symbol("quote");
     public static Symbol sym(String name) { return new Symbol(name);}
     public static Symbol sym(Expr e) { return (Symbol)e;}
-
-    public static class KeyValue {
-        KeyValue prev; Symbol key; Expr value;
-        public KeyValue(KeyValue prev, Symbol key, Expr value) {
-            this.prev = prev; this.key = key; this.value = value;
-        }
-    }
-    public static class Env {
-        KeyValue kv;
-        public Env() { this.kv = null; }
-        public Env(Env e) { this.kv = e.kv; }
-    }
-    public static Symbol define(Env e, Symbol key, Expr value) {
-        e.kv = new KeyValue(e.kv, key, value);
-        return key;
-    }
-    public static Expr get(Env env, Symbol key) {
-        for (KeyValue kv = env.kv; kv != null; kv = kv.prev)
-            if (kv.key.equals(key))
-                return kv.value;
-        throw new DecLispException("get(): Not found %s", key);
-    }
-    public static Expr set(Env env, Symbol key, Expr value) {
-        for (KeyValue kv = env.kv; kv != null; kv = kv.prev)
-            if (kv.key.equals(key))
-                return kv.value = value;
-        throw new DecLispException("set(): Not found %s", key);
-    }
 
     public static <T> T cast(Expr e, Class<T> cls) {
         if (cls.isInstance(e))
             return cls.cast(e);
         else
             throw new DecLispException("cast: cannot cast '%s' to '%s'",
-                print(e), cls.getSimpleName());
+                e, cls.getSimpleName());
     }
 
-    public record Cons(Expr car, Expr cdr) implements Expr {
-        public Cons(Expr car, Expr cdr) {
-            if (!cdr.equals(NIL) && !(cdr instanceof Cons))
-                throw new DecLispException("cons: cannot cons '%s' and '%s'",
-                    print(car), print(cdr));
-            this.car = car;
-            this.cdr = cdr;
-        }
-        @Override public final String toString() { return printCons(this); }
-    }
     public static Expr cons(Expr a, Expr b) { return new Cons(a, b); }
-    static String printCons(Cons cons) {
-        StringBuilder sb = new StringBuilder();
-        if (cons.cdr instanceof Cons cdr && cons.car.equals(QUOTE)) // && cdr.cdr.equals(NIL))
-            return sb.append("'").append(print(cdr.car)).toString();
-        sb.append("(").append(print(cons.car));
-        for (Expr c : cons.cdr)
-            sb.append(" ").append(print(c));
-        return sb.append(")").toString();
-    }
 
-    public static class Nil implements Expr { private Nil() {} }
-    public static Expr NIL = new Nil() { @Override public String toString() { return "()"; }};
-
-    public record Dec(BigDecimal value) implements Expr {
-        @Override public final boolean equals(Object r) {
-            return r instanceof Dec d && value.compareTo(d.value) == 0;
-        }
-        @Override public final String toString() {
-            return value.toString().replaceFirst("\\.0$", "");
-        }
-    }
     public static BigDecimal dec(Expr e) { return cast(e, Dec.class).value; }
-    // public static BigDecimal[] decArray(Expr e) {
-    //     return e.stream()
-    //         .map(x -> cast(x, Dec.class).value)
-    //         .toArray(BigDecimal[]::new);
-    // }
     public static Dec dec(BigDecimal v) { return new Dec(v); }
     public static Dec dec(double v) { return new Dec(BigDecimal.valueOf(v)); }
 
-    public record Bool(boolean value) implements Expr {
-        @Override public final String toString() { return "" + value; }
-    }
-    public static boolean bool(Expr e) { return cast(e, Bool.class).value();}
-    public static Bool bool(boolean b) { return b ? T : F; }
-    public static final Bool T = new Bool(true);
-    public static final Bool F = new Bool(false);
+    public static boolean bool(Expr e) { return cast(e, Bool.class).value;}
+    public static Bool bool(boolean b) { return b ? Bool.T : Bool.F; }
 
-    public static String print(Expr e) {
-        return switch (e) {
-            case Symbol s -> s.toString();
-            case Bool b -> b.toString();
-            case Dec d -> d.toString();
-            case Nil n -> n.toString();
-            case Cons c -> c.toString();
-            default -> "print: unknown type '%s'".formatted(e);
-        };
-    }
+    // public static String print(Expr e) {
+    //     return switch (e) {
+    //         case Symbol s -> s.toString();
+    //         case Bool b -> b.toString();
+    //         case Dec d -> d.toString();
+    //         case Nil n -> n.toString();
+    //         case Cons c -> c.toString();
+    //         default -> "print: unknown type '%s'".formatted(e);
+    //     };
+    // }
 
     public interface Apply extends Expr {
         Expr apply(Expr args, Env env);
@@ -170,34 +64,34 @@ public class DecLisp {
 
     public static Expr eval(Expr e, Env env) {
         return switch (e) {
-            case Symbol s -> get(env, s);
+            case Symbol s -> env.get(s);
             case Bool b -> b;
             case Dec d -> d;
             case Nil n -> n;
             case Cons c -> {
-                Expr head = eval(c.car, env);
+                Expr head = eval(c.car(), env);
                 if (head instanceof Apply app)
-                    yield app.apply(c.cdr, env);
+                    yield app.apply(c.cdr(), env);
                 else if (head instanceof Dec)   // リストの先頭が数字ならevlisする
-                    yield cons(head, evlis(c.cdr, env));
+                    yield cons(head, evlis(c.cdr(), env));
                 else if (head instanceof Bool)   // リストの先頭が真偽値ならevlisする
-                    yield cons(head, evlis(c.cdr, env));
+                    yield cons(head, evlis(c.cdr(), env));
                 else
-                    throw new DecLispException("eval(): Cannot apply '%s' to '%s'", print(head), print(c.cdr));
+                    throw new DecLispException("eval(): Cannot apply '%s' to '%s'", head, c.cdr());
             }
-            default -> throw new DecLispException("eval(): Unknown type '%s'", print(e));
+            default -> throw new DecLispException("eval(): Unknown type '%s'", e);
         };
     }
 
     public static Expr list(Expr... list) {
-        Expr r = NIL;
+        Expr r = Nil.NIL;
         for (int i = list.length - 1; i >= 0; --i)
             r = cons(list[i], r);
         return r;
     }
 
     public static Expr list(List<Expr> list) {
-        Expr r = NIL;
+        Expr r = Nil.NIL;
         for (int i = list.size() - 1; i >= 0; --i)
             r = cons(list.get(i), r);
         return r;
@@ -298,7 +192,7 @@ public class DecLisp {
 
         Expr quote() {
             clearGet();  // skip '\''
-            return DecLisp.list(DecLisp.QUOTE, read());
+            return DecLisp.list(Symbol.QUOTE, read());
         }
 
         static boolean isDigit(int ch) {
@@ -354,8 +248,8 @@ public class DecLisp {
                 get();
             String value = buffer.stringButLast();
             return switch (value) {
-                case "T" -> DecLisp.T;
-                case "F" -> DecLisp.F;
+                case "T" -> Bool.T;
+                case "F" -> Bool.F;
                 default -> new Symbol(value);
             };
         }
@@ -383,8 +277,8 @@ public class DecLisp {
 
     interface Converter<T> {
         Class<T> clazz();
-        Expr construct(T t);
-        T cast(Expr e);
+        Expr single(T t);
+        T single(Expr e);
         @SuppressWarnings("unchecked")
         default T[] array(int size) {
             return (T[])Array.newInstance(clazz(), size);
@@ -395,10 +289,10 @@ public class DecLisp {
         }
         default boolean isInstance(Expr e) { return clazz().isInstance(e); }
         default T[] array(Expr e) {
-            T[] result = e.stream().map(x -> cast(x)).toArray(x -> array(x));
+            T[] result = e.stream().map(x -> single(x)).toArray(x -> array(x));
             if (result.length == 0) {
                 result = array(1);
-                result[0] = cast(e);
+                result[0] = single(e);
             }
             return result;
         }
@@ -408,21 +302,21 @@ public class DecLisp {
     }
     static final Converter<BigDecimal> DEC_CONV = new Converter<>() {
         @Override public Class<BigDecimal> clazz() { return BigDecimal.class; }
-        @Override public Expr construct(BigDecimal t) { return dec(t); }
-        @Override public BigDecimal cast(Expr e) { return dec(e); }
+        @Override public Expr single(BigDecimal t) { return dec(t); }
+        @Override public BigDecimal single(Expr e) { return dec(e); }
     };
     static final Converter<Boolean> BOOL_CONV = new Converter<>() {
         @Override public Class<Boolean> clazz() { return Boolean.class; }
-        @Override public Expr construct(Boolean t) { return bool(t); }
-        @Override public Boolean cast(Expr e) { return bool(e); }
+        @Override public Expr single(Boolean t) { return bool(t); }
+        @Override public Boolean single(Expr e) { return bool(e); }
     };
 
     public static <T> int matrix(Expr evaled, List<List<T>> mat, Converter<T> conv) {
         int maxRowSize = 0;
         for (Expr c : evaled) {
-            List<T> row = c.stream().map(d -> conv.cast(d)).toList();
+            List<T> row = c.stream().map(d -> conv.single(d)).toList();
             if (row.isEmpty())
-                row = List.of(conv.cast(c));
+                row = List.of(conv.single(c));
             // System.out.println(row);
             maxRowSize = Math.max(maxRowSize, row.size());
             mat.add(row);
@@ -431,8 +325,8 @@ public class DecLisp {
     }
 
     public static <T> Expr arithmetic(Expr evaled, T unit, BinaryOperator<T> op, Converter<T> conv) {
-        if (evaled.equals(NIL))
-            return conv.construct(unit);
+        if (evaled.equals(Nil.NIL))
+            return conv.single(unit);
         T[][] mat = conv.matrix(evaled);
         int maxRowSize = Stream.of(mat).mapToInt(row -> row.length).max().getAsInt();
         // System.out.println(maxRowSize);
@@ -449,10 +343,10 @@ public class DecLisp {
             }
         }
         if (maxRowSize == 1)
-            return conv.construct(result[0]);
-        Expr r = NIL;
+            return conv.single(result[0]);
+        Expr r = Nil.NIL;
         for (int i = maxRowSize - 1; i >= 0; --i)
-            r = cons(conv.construct(result[i]), r);
+            r = cons(conv.single(result[i]), r);
         return r;
     }
 
@@ -468,13 +362,13 @@ public class DecLisp {
 
     public static void pairlis(Expr parms, Expr args, Env env) {
         for (Expr c : parms) {
-            define(env, (Symbol)c, car(args));
+            env.define((Symbol)c, car(args));
             args = cdr(args);
         }
     }
 
     public static Expr progn(Expr body, Env env) {
-        Expr r = NIL;
+        Expr r = Nil.NIL;
         for (Expr c : body)
             r = eval(c, env);
         return r;
@@ -482,8 +376,8 @@ public class DecLisp {
 
     public static Env defaultEnv() {
         Env env = new Env();
-        define(env, QUOTE, (Apply) (a, e) -> (car((a))));
-        define(env, sym("lambda"), (Apply) (a, e) -> {
+        env.define(Symbol.QUOTE, (Apply) (a, e) -> (car((a))));
+        env.define(sym("lambda"), (Apply) (a, e) -> {
             Expr parms = car(a), body = cdr(a);
             return (Apply)(aa, ee) -> {
                 Env n = new Env(e);
@@ -491,50 +385,50 @@ public class DecLisp {
                 return progn(body, n);
             };
         });
-        define(env, sym("if"), (Apply) (a, e) -> {
+        env.define(sym("if"), (Apply) (a, e) -> {
             boolean p = bool(eval(car(a), e));
             if (p)
                 return eval(car(cdr(a)), e);
-            else if (!cdr(cdr(a)).equals(NIL))
+            else if (!cdr(cdr(a)).equals(Nil.NIL))
                 return eval(car(cdr(cdr(a))), e);
             else
-                return NIL;
+                return Nil.NIL;
         });
-        define(env, sym("define"), (Apply) (a, e) -> define(e, sym(car(a)), eval(car(cdr(a)), e)));
+        env.define(sym("define"), (Apply) (a, e) -> e.define(sym(car(a)), eval(car(cdr(a)), e)));
         // conditional AND
-        define(env, sym("&&"), (Apply) (a, e) -> {
-            Expr last = T;
+        env.define(sym("&&"), (Apply) (a, e) -> {
+            Expr last = Bool.T;
             for (Expr c : a)
-                if ((last = eval(c, e)).equals(F))
+                if ((last = eval(c, e)).equals(Bool.F))
                     return last;
             return last;
         });
         // conditional OR
-        define(env, sym("||"), (Apply) (a, e) -> {
-            Expr last = F;
+        env.define(sym("||"), (Apply) (a, e) -> {
+            Expr last = Bool.F;
             for (Expr c : a)
-                if (!(last = eval(c, e)).equals(F))
+                if (!(last = eval(c, e)).equals(Bool.F))
                     return last;
             return last;
         });
-        define(env, sym("car"), (Proc) a -> car(car(a)));
-        define(env, sym("cdr"), (Proc) a -> cdr(car(a)));
-        define(env, sym("cons"), (Proc) a -> cons(car(a), car(cdr(a))));
-        define(env, sym("not"), (Proc) a -> car(a).equals(F) ? T : F);
-        define(env, sym("!"), (Proc) a -> car(a).equals(F) ? T : F);
-        define(env, sym("+"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.add(y), DEC_CONV));
-        define(env, sym("-"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.subtract(y), DEC_CONV));
-        define(env, sym("*"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.multiply(y), DEC_CONV));
-        define(env, sym("/"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.divide(y, MathContext.DECIMAL128), DEC_CONV));
-        define(env, sym("and"), (Proc) a -> arithmetic(a, true, (x, y) -> x & y, BOOL_CONV));
-        define(env, sym("or"), (Proc) a -> arithmetic(a, false, (x, y) -> x | y, BOOL_CONV));
-        define(env, sym("xor"), (Proc) a -> arithmetic(a, false, (x, y) -> x ^ y, BOOL_CONV));
-        define(env, sym("=="), (Proc) a -> compare(a, x -> x == 0));
-        define(env, sym("!="), (Proc) a -> compare(a, x -> x != 0));
-        define(env, sym("<"), (Proc) a -> compare(a, x -> x < 0));
-        define(env, sym("<="), (Proc) a -> compare(a, x -> x <= 0));
-        define(env, sym(">"), (Proc) a -> compare(a, x -> x > 0));
-        define(env, sym(">="), (Proc) a -> compare(a, x -> x >= 0));
+        env.define(sym("car"), (Proc) a -> car(car(a)));
+        env.define(sym("cdr"), (Proc) a -> cdr(car(a)));
+        env.define(sym("cons"), (Proc) a -> cons(car(a), car(cdr(a))));
+        env.define(sym("not"), (Proc) a -> car(a).equals(Bool.F) ? Bool.T : Bool.F);
+        env.define(sym("!"), (Proc) a -> car(a).equals(Bool.F) ? Bool.T : Bool.F);
+        env.define(sym("+"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.add(y, MC), DEC_CONV));
+        env.define(sym("-"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.subtract(y, MC), DEC_CONV));
+        env.define(sym("*"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.multiply(y, MC), DEC_CONV));
+        env.define(sym("/"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.divide(y, MC), DEC_CONV));
+        env.define(sym("and"), (Proc) a -> arithmetic(a, true, (x, y) -> x & y, BOOL_CONV));
+        env.define(sym("or"), (Proc) a -> arithmetic(a, false, (x, y) -> x | y, BOOL_CONV));
+        env.define(sym("xor"), (Proc) a -> arithmetic(a, false, (x, y) -> x ^ y, BOOL_CONV));
+        env.define(sym("=="), (Proc) a -> compare(a, x -> x == 0));
+        env.define(sym("!="), (Proc) a -> compare(a, x -> x != 0));
+        env.define(sym("<"), (Proc) a -> compare(a, x -> x < 0));
+        env.define(sym("<="), (Proc) a -> compare(a, x -> x <= 0));
+        env.define(sym(">"), (Proc) a -> compare(a, x -> x > 0));
+        env.define(sym(">="), (Proc) a -> compare(a, x -> x >= 0));
         return env;
     }
 }
