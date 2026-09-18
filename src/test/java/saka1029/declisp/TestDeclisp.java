@@ -13,8 +13,6 @@ import java.math.BigDecimal;
 
 import org.junit.Test;
 
-import saka1029.declisp.DecLisp.Reader;
-
 /**
  * (1) Listでドット記法は許さない。
  * (2) Consセルはイミュータブルである。
