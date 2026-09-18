@@ -14,11 +14,13 @@ public class DecLisp {
 
     public static MathContext MC = MathContext.DECIMAL128;
 
-
     public static Symbol sym(String name) { return new Symbol(name);}
     public static Symbol sym(Expr e) { return (Symbol)e;}
 
     public static Expr cons(Expr a, Expr b) { return new Cons(a, b); }
+
+    public static Expr list(Expr... list) { return Cons.list(list); }
+    public static Expr list(List<Expr> list) { return Cons.list(list); }
 
     public static BigDecimal dec(Expr e) { return e.cast(Dec.class).value; }
     public static Dec dec(BigDecimal v) { return new Dec(v); }
@@ -26,20 +28,6 @@ public class DecLisp {
 
     public static boolean bool(Expr e) { return e.cast(Bool.class).value;}
     public static Bool bool(boolean b) { return b ? Bool.T : Bool.F; }
-
-    public static Expr list(Expr... list) {
-        Expr r = Nil.NIL;
-        for (int i = list.length - 1; i >= 0; --i)
-            r = cons(list[i], r);
-        return r;
-    }
-
-    public static Expr list(List<Expr> list) {
-        Expr r = Nil.NIL;
-        for (int i = list.size() - 1; i >= 0; --i)
-            r = cons(list.get(i), r);
-        return r;
-    }
 
     public static <T> Expr arithmetic(Expr evaled, T unit, BinaryOperator<T> op, Converter<T> conv) {
         if (evaled.equals(Nil.NIL))

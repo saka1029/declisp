@@ -1,5 +1,7 @@
 package saka1029.declisp;
 
+import java.util.List;
+
 public record Cons(Expr car, Expr cdr) implements Expr {
 
     public Cons(Expr car, Expr cdr) {
@@ -13,6 +15,13 @@ public record Cons(Expr car, Expr cdr) implements Expr {
         Expr r = Nil.NIL;
         for (int i = list.length - 1; i >= 0; --i)
             r = new Cons(list[i], r);
+        return r;
+    }
+
+    public static Expr list(List<Expr> list) {
+        Expr r = Nil.NIL;
+        for (int i = list.size() - 1; i >= 0; --i)
+            r = new Cons(list.get(i), r);
         return r;
     }
 
