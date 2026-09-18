@@ -16,7 +16,6 @@ public class Dec implements Expr {
 
     @Override
     public boolean equals(Object obj) {
-        System.out.printf("this=%s right=%s%n", this, obj);
         return obj instanceof Dec r && r.value.compareTo(value) == 0;
     }
     
