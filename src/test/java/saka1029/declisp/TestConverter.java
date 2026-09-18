@@ -31,7 +31,7 @@ public class TestConverter {
     public void testConverterDEC() {
         assertEquals(BigDecimal.class, Converter.DEC.clazz());
         assertEquals(new Dec(bdec(123)), Converter.DEC.single(bdec(123)));
-        assertTrue(bdec(123).compareTo(Converter.DEC.single(dec(123))) == 0);
+        assertEqualsBigDeciml(bdec(123), Converter.DEC.single(dec(123)));
         assertEqualsBigDeciml(new BigDecimal[3], Converter.DEC.array(3));
         assertEqualsBigDeciml(new BigDecimal[3][0], Converter.DEC.matrix(3));
         assertEqualsBigDeciml(bdecs(3, 4), Converter.DEC.array(list(dec(3), dec(4))));
