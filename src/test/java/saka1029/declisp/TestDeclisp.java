@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 
 import org.junit.Test;
 
-import saka1029.declisp.DecLisp.Apply;
 import saka1029.declisp.DecLisp.Reader;
 
 /**
@@ -30,9 +29,9 @@ public class TestDeclisp {
     @Test 
     public void testCast() {
         Expr e = dec(8);
-        assertEquals(Dec.class, cast(e, Dec.class).getClass());
+        assertEquals(Dec.class, e.cast(Dec.class).getClass());
         try {
-            cast(e, Symbol.class);
+            e.cast(Symbol.class);
             fail();
         } catch (DecLispException x) {
         }
@@ -90,24 +89,18 @@ public class TestDeclisp {
     public void testEval() {
         Env env = new Env();
         env.define(sym("a"), dec(3));
-        assertEquals(list(), eval(Nil.NIL, env));
-        assertEquals(dec(3), eval(sym("a"), env));
-        assertEquals(dec(3), eval(dec(3), env));
-        assertEquals(Bool.T, eval(Bool.T, env));
-        assertEquals(Bool.F, eval(Bool.F, env));
+        assertEquals(list(), Nil.NIL.eval(env));
+        assertEquals(dec(3), sym("a").eval(env));
+        assertEquals(dec(3), dec(3).eval(env));
+        assertEquals(Bool.T, Bool.T.eval(env));
+        assertEquals(Bool.F, Bool.F.eval(env));
         env.define(sym("+"), (Apply)(a, e) -> {
-            Expr evaled = evlis(a, e);
-            return dec(dec(car(evaled)).add(dec(car(cdr(evaled)))));
+            Expr evaled = a.evlis(e);
+            return dec(dec(evaled.car()).add(dec(evaled.cdr().car())));
         });
-        assertEquals(dec(3), eval(list(sym("+"), dec(1), dec(2)), env));
-        assertEquals(list(dec(3), dec(1)), eval(list(sym("a"), dec(1)), env));
-        try {
-            eval(new Expr(){@Override public String toString() { return "UNKNOWN"; }}, env);
-            fail();
-        } catch (DecLispException x) {
-            assertEquals("eval(): Unknown type 'UNKNOWN'", x.getMessage());
-        }
-        assertEquals(list(Bool.T, dec(3)), eval(list(Bool.T, dec(3)), env));
+        assertEquals(dec(3), list(sym("+"), dec(1), dec(2)).eval(env));
+        assertEquals(list(dec(3), dec(1)), list(sym("a"), dec(1)).eval(env));
+        assertEquals(list(Bool.T, dec(3)), list(Bool.T, dec(3)).eval(env));
     }
 
     @Test 
@@ -200,7 +193,7 @@ public class TestDeclisp {
         }
     }
 
-    static Expr evalRead(String s, Env e) { return eval(read(s), e); }
+    static Expr evalRead(String s, Env e) { return read(s).eval(e); }
 
     @Test
     public void evalRead() {
@@ -330,12 +323,12 @@ public class TestDeclisp {
             {BigDecimal.valueOf(1), BigDecimal.valueOf(2), BigDecimal.valueOf(3)},
             {BigDecimal.valueOf(4)},
             {BigDecimal.valueOf(5), BigDecimal.valueOf(6), BigDecimal.valueOf(7)},
-        }, DEC_CONV.matrix(read("((1 2 3) (4) (5 6 7))")));
+        }, Converter.DEC.matrix(read("((1 2 3) (4) (5 6 7))")));
         assertArrayEquals(new BigDecimal[][] {
             {BigDecimal.valueOf(1), BigDecimal.valueOf(2), BigDecimal.valueOf(3)},
             {BigDecimal.valueOf(4)},
             {BigDecimal.valueOf(5), BigDecimal.valueOf(6), BigDecimal.valueOf(7)},
-        }, DEC_CONV.matrix(read("((1 2 3) 4 (5 6 7))")));
+        }, Converter.DEC.matrix(read("((1 2 3) 4 (5 6 7))")));
 
     }
 }

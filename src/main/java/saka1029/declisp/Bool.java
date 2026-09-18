@@ -9,6 +9,15 @@ public class Bool implements Expr {
         this.value = value;
     }
 
+    public static Bool of(boolean value) {
+        return value ? T : F;
+    }
+
+    @Override
+    public Expr eval(Env env) {
+        return this;
+    }
+
     @Override
     public final String toString() {
         return value ? "T" : "F";

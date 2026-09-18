@@ -10,6 +10,11 @@ public class Dec implements Expr {
     }
 
     @Override
+    public Expr eval(Env env) {
+        return this;
+    }
+
+    @Override
     public boolean equals(Object obj) {
         return obj instanceof Dec r && r.value.compareTo(value) == 0;
     }
