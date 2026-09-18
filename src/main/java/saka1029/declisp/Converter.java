@@ -18,8 +18,6 @@ interface Converter<T> {
         return (T[][]) Array.newInstance(clazz(), size, 0);
     }
 
-    default boolean isInstance(Expr e) { return clazz().isInstance(e); }
-
     default T[] array(Expr e) {
         T[] result = e.stream().map(x -> single(x)).toArray(x -> array(x));
         if (result.length == 0) {
@@ -28,6 +26,7 @@ interface Converter<T> {
         }
         return result;
     }
+
     default T[][] matrix(Expr e) {
         return e.stream().map(x -> array(x)).toArray(x -> matrix(x));
     }

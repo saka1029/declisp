@@ -22,6 +22,33 @@ public class DecLisp {
     public static Expr list(Expr... list) { return Cons.list(list); }
     public static Expr list(List<Expr> list) { return Cons.list(list); }
 
+    public static boolean equal(BigDecimal a, BigDecimal b) { return a.compareTo(b) == 0; }
+    public static boolean equal(BigDecimal[] a, BigDecimal b[]) {
+        int al = a.length;
+        if (b.length != al)
+            return false;
+        for (int i = 0; i < al; ++i)
+            if (!equal(a[i], b[i]))
+                return false;
+        return true;
+    }
+    public static boolean equal(BigDecimal[][] a, BigDecimal b[][]) {
+        int al = a.length;
+        if (b.length != al)
+            return false;
+        for (int i = 0; i < al; ++i)
+            if (!equal(a[i], b[i]))
+                return false;
+        return true;
+    }
+    public static BigDecimal bdec(double v) { return BigDecimal.valueOf(v); }
+    public static BigDecimal[] bdec(double... v) {
+        BigDecimal[] result = new BigDecimal[v.length];
+        for (int i = 0, size = v.length; i < size; ++i)
+            result[i] = BigDecimal.valueOf(v[i]);
+        return result;
+    }
+
     public static BigDecimal dec(Expr e) { return e.cast(Dec.class).value; }
     public static Dec dec(BigDecimal v) { return new Dec(v); }
     public static Dec dec(double v) { return new Dec(BigDecimal.valueOf(v)); }
