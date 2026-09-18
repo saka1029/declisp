@@ -1,9 +1,10 @@
 package saka1029.declisp;
 
 public class Bool implements Expr {
-    public final boolean value;
     public static final Bool T = new Bool(true);
     public static final Bool F = new Bool(false);
+
+    public final boolean value;
 
     private Bool(boolean value) {
         this.value = value;

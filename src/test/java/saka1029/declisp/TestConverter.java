@@ -1,7 +1,6 @@
 package saka1029.declisp;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static saka1029.declisp.DecLisp.*;
 
