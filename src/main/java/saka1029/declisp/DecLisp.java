@@ -22,7 +22,9 @@ public class DecLisp {
     public static Expr list(Expr... list) { return Cons.list(list); }
     public static Expr list(List<Expr> list) { return Cons.list(list); }
 
-    public static boolean equal(BigDecimal a, BigDecimal b) { return a.compareTo(b) == 0; }
+    public static boolean equal(BigDecimal a, BigDecimal b) {
+        return a == b || a != null && b != null && a.compareTo(b) == 0;
+    }
     public static boolean equal(BigDecimal[] a, BigDecimal b[]) {
         int al = a.length;
         if (b.length != al)
