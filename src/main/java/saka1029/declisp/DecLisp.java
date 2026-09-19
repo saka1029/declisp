@@ -95,6 +95,11 @@ public class DecLisp {
         return r;
     }
 
+    public static Expr not(Expr arg) {
+        Boolean[] b = Converter.BOOL.array(arg);
+        return list(Stream.of(b).map(x -> Converter.BOOL.single(!x)).toArray(Expr[]::new));
+    }
+
     public static Env defaultEnv() {
         Env env = new Env();
         env.define(Symbol.QUOTE, (Apply) (a, e) -> a.car());
@@ -135,8 +140,8 @@ public class DecLisp {
         env.define(sym("car"), (Proc) a -> a.car().car());
         env.define(sym("cdr"), (Proc) a -> a.car().cdr());
         env.define(sym("cons"), (Proc) a -> cons(a.car(), a.cdr().car()));
-        env.define(sym("not"), (Proc) a -> a.car().equals(Bool.F) ? Bool.T : Bool.F);
-        env.define(sym("!"), (Proc) a -> a.car().equals(Bool.F) ? Bool.T : Bool.F);
+        env.define(sym("not"), (Proc) a -> not(a.car()));
+        env.define(sym("!"), (Proc) a -> not(a.car()));
         env.define(sym("+"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.add(y, MC), Converter.DEC));
         env.define(sym("-"), (Proc) a -> arithmetic(a, BigDecimal.ZERO, (x, y) -> x.subtract(y, MC), Converter.DEC));
         env.define(sym("*"), (Proc) a -> arithmetic(a, BigDecimal.ONE, (x, y) -> x.multiply(y, MC), Converter.DEC));

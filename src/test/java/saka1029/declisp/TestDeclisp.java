@@ -8,7 +8,6 @@ import static org.junit.Assert.fail;
 import static saka1029.declisp.DecLisp.*;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 
 import org.junit.Test;
 
@@ -251,6 +250,7 @@ public class TestDeclisp {
         assertEquals(dec(4), evalRead("(/ 24 2 3)", env));
         assertEquals(read("(9 10 11)"), evalRead("(+ (1 2 3) 8)) ", env));
         assertEquals(read("(9 10 11)"), evalRead("(+ 8 (1 2 3))) ", env));
+        assertEquals(read("(12 13 14)"), evalRead("(+ 8 (1 2 3) 3)) ", env));
         assertEquals(read("(0.2 0.1 0.05)"), evalRead("(/ (5 10 20))) ", env));
         assertEquals(read("(2.5 5 10)"), evalRead("(/ (5 10 20) 2)) ", env));
         assertEquals(read("(16 18 20)"), evalRead("(+ (1 2 3) (4) 5 (6 (- 10 3) 8)) ", env));
@@ -280,15 +280,6 @@ public class TestDeclisp {
     }
 
     @Test 
-    public void testStringBuilder() {
-        String hokke = "𩸽";
-        StringBuilder sb = new StringBuilder();
-        sb.appendCodePoint(Character.codePointAt(hokke, 0));
-        // System.out.println(sb);
-        assertEquals(hokke, sb.toString());
-    }
-
-    @Test 
     public void testLetter() {
         assertTrue(Character.isLetter('漢'));
         assertTrue(Character.isLetter('あ'));
@@ -308,17 +299,9 @@ public class TestDeclisp {
     @Test 
     public void testEvalLogicalAndOr() {
         Env env = defaultEnv();
+        assertEquals(list(Bool.F, Bool.T), evalRead("(not (T F))", env));
         assertEquals(list(Bool.T, Bool.F, Bool.F, Bool.F), evalRead("(and (T T F F) (T F T F))", env));
         assertEquals(list(Bool.T, Bool.T, Bool.T, Bool.F), evalRead("(or (T T F F) (T F T F))", env));
         assertEquals(list(Bool.F, Bool.T, Bool.T, Bool.F), evalRead("(xor (T T F F) (T F T F))", env));
-    }
-
-    @Test 
-    public void testConverter() {
-        assertTrue(equal(new BigDecimal[][] { bdecs(1, 2, 3), bdecs(4), bdecs(5, 6, 7) },
-            Converter.DEC.matrix(read("((1 2 3) (4) (5 6 7))"))));
-        assertTrue(equal(new BigDecimal[][] { bdecs(1, 2, 3), bdecs(4), bdecs(5, 6, 7) },
-            Converter.DEC.matrix(read("((1 2 3) 4 (5 6 7))"))));
-
     }
 }

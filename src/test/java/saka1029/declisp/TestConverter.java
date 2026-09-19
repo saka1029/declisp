@@ -1,30 +1,14 @@
 package saka1029.declisp;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import static saka1029.declisp.DecLisp.*;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 
 import org.junit.Test;
+import static saka1029.declisp.Common.*;
 
 public class TestConverter {
-
-    static void assertEqualsBigDeciml(BigDecimal expected, BigDecimal actual) {
-        if (!equal(expected, actual))
-            fail("%s != %s".formatted(expected, actual));
-    }
-
-    static void assertEqualsBigDeciml(BigDecimal[] expected, BigDecimal[] actual) {
-        if (!equal(expected, actual))
-            fail("%s != %s".formatted(Arrays.toString(expected), Arrays.toString(actual)));
-    }
-
-    static void assertEqualsBigDeciml(BigDecimal[][] expected, BigDecimal[][] actual) {
-        if (!equal(expected, actual))
-            fail("%s != %s".formatted(Arrays.deepToString(expected), Arrays.deepToString(actual)));
-    }
 
     @Test 
     public void testConverterDEC() {
