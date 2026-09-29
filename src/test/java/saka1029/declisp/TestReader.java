@@ -103,6 +103,6 @@ public class TestReader {
         String line = "(abc de )s";
         String splitter = "(?<=[()])|(?=[()])|\\s+";
         String[] words = line.split(splitter);
-        System.out.println(Arrays.toString(words));
+        assertEquals("[(, abc, de, , ), s]", Arrays.toString(words));
     }
 }

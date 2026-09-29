@@ -811,8 +811,8 @@ public class DecLisp {
         parseVariables(car(args), variables, symbols, env);
         parseConstraints(car(cdr(args)), constraints, symbols);
         bindConstaints(variables, constraints);
-        for (Variable v : variables)
-            System.out.println(v);
+        // for (Variable v : variables)
+        //     System.out.println(v);
         return solve(variables, env);
     }
 
