@@ -7,7 +7,7 @@ import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-interface Expr extends Iterable<Expr>, Comparable<Expr> {
+public interface Expr extends Iterable<Expr>, Comparable<Expr> {
 
     default Expr eval(Env env) {
         throw new DecLispException("Expr.eval(): cannot eval");
