@@ -24,7 +24,7 @@ public class TestCons {
             iter.next();
             fail();
         } catch (NoSuchElementException x) {
-            assertEquals("Cons.iterator(): invalid next() call", x.getMessage());
+            assertEquals(null, x.getMessage());
         }
     }
 

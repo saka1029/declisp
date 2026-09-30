@@ -10,7 +10,7 @@ import java.util.stream.StreamSupport;
 public interface Expr extends Iterable<Expr>, Comparable<Expr> {
 
     default Expr eval(Env env) {
-        throw new DecLispException("Expr.eval(): cannot eval");
+        throw new DecLispException("cannot eval", this);
     }
 
     default boolean isNil() {
@@ -58,7 +58,12 @@ public interface Expr extends Iterable<Expr>, Comparable<Expr> {
 
             @Override
             public boolean hasNext() {
-                return expr instanceof Cons;
+                if (expr instanceof Cons)
+                    return true;
+                else if (expr instanceof Nil)
+                    return false;
+                else
+                    throw new DecLispException("invalid list element '%s'", expr);
             }
 
             @Override
@@ -67,7 +72,7 @@ public interface Expr extends Iterable<Expr>, Comparable<Expr> {
                     expr = c.cdr();
                     return c.car();
                 } else
-                    throw new NoSuchElementException("Cons.iterator(): invalid next() call");
+                    throw new NoSuchElementException();
             }
         };
     }

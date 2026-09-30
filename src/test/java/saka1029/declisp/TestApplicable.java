@@ -16,7 +16,7 @@ public class TestApplicable {
             a.eval(env);
             fail();
         } catch (DecLispException x) {
-            assertEquals("Expr.eval(): cannot eval", x.getMessage());
+            assertEquals("cannot eval", x.getMessage());
         }
     }
 

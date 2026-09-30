@@ -675,9 +675,19 @@ public class TestDeclisp {
         assertEquals(List.of(), listArgsList(read("(() ())")));
         assertEquals(List.of(), listArgsList(read("(() (3))")));
         // error case 1
-        assertEquals(List.of(read("(1 4)"), read("(2 5)")), listArgsList(read("((1 2 3) (4 5 . 6))")));
+        try {
+            assertEquals(List.of(read("(1 4)"), read("(2 5)")), listArgsList(read("((1 2 3) (4 5 . 6))")));
+            fail();
+        } catch (DecLispException x) {
+            assertEquals("invalid list element '6'", x.getMessage());
+        }
         // error case 2
-        assertEquals(List.of(read("(1 4)"), read("(2 5)")), listArgsList(read("((1 2 3) (4 5) .6)")));
+        try {
+            listArgsList(read("((1 2 3) (4 5) .6)"));
+            fail();
+        } catch (DecLispException x) {
+            assertEquals("invalid list element '6'", x.getMessage());
+        }
         try {
             listArgsList(read("((1 2) 3)"));
         } catch (DecLispException x) {
