@@ -16,7 +16,6 @@ import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static ch.obermuhlner.math.big.BigDecimalMath.*;
 import static saka1029.declisp.Common.*;
@@ -295,6 +294,8 @@ public class DecLisp {
      * ((1 2 3) (4)) -> ((1 4))
      * 要素がリストでない場合はDecLispExceptionをスローする。
      * ((1 2 3) 4) -> ERROR
+     * 空のリストの場合はからのリストを返す。
+     * () -> ()
      */
     static Iterable<Expr> listArgsIterable(Expr args) {
         List<Iterator<Expr>> iterators = new ArrayList<>();
@@ -499,12 +500,13 @@ public class DecLisp {
     }
 
     public static Expr polynomial(Expr args, Expr[] unit, BinaryOperator<Expr[]> operator) {
-        Expr[][] matrix = matrix(args);
-        if (matrix.length == 0)
-            return Nil.NIL;
+        // Expr[][] matrix = matrix(args);
+        // if (matrix.length == 0)
+        //     return Nil.NIL;
         int count = 0;
         Expr[] result = unit, prev = null;
-        for (Expr[] row : matrix) {
+        for (Expr a : listArgsIterable(args)) {
+            Expr[] row = a.stream().toArray(Expr[]::new);
             result = operator.apply(count == 1 ? prev : result, row);
             prev = row;
             ++count;
@@ -755,7 +757,7 @@ public class DecLisp {
     }
 
     static void parseAllDifferent(Expr cline, List<Constraint> constraints, Set<Symbol> symbols) {
-        Expr[] vars = array(cdr(cline));
+        Expr[] vars = cdr(cline).stream().toArray(Expr[]::new);
         for (Expr v : vars) // all-differentの対象変数がすべて変数として定義されていることを確認する
             if (!symbols.contains(v))
                 throw new DecLispException("undefined variable '%s'", v);

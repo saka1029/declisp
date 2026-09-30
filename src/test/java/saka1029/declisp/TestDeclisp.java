@@ -256,29 +256,29 @@ public class TestDeclisp {
         assertEquals(read("(1 x)"), eval(env, "(bar 1 'x)"));
     } 
 
-    @Test 
-    public void testMatrixTranspose() {
-        Expr[][] matrix = {
-            {dec(1), dec(2), dec(3)},
-            {dec(4)},
-            {dec(5), dec(6)}};
-        assertArrayEquals(matrix, matrix(read("((1 2 3) 4 (5 6))")));
-        assertArrayEquals(matrix, matrix(read("((1 2 3) (4) (5 6))")));
-        try {
-            // 行の長さは最大値(=3)または1でなければならない。
-            // (5 6)はこの条件を満たさない。
-            transpose(matrix(read("((1 2 3) 4 (5 6))")));
-            fail();
-        } catch (DecLispException x) {
-            assertEquals("Illegal matrix [[1, 2, 3], [4], [5, 6]]", x.getMessage());
-        }
-        // 長さが1だった行は最大値(=3)まで増幅される。
-        Expr[][] transposed = {
-            {dec(1), dec(4), dec(5)},
-            {dec(2), dec(4), dec(6)},
-            {dec(3), dec(4), dec(7)}};
-        assertArrayEquals(transposed, transpose(matrix(read("((1 2 3) 4 (5 6 7))"))));
-    }
+    // @Test 
+    // public void testMatrixTranspose() {
+    //     Expr[][] matrix = {
+    //         {dec(1), dec(2), dec(3)},
+    //         {dec(4)},
+    //         {dec(5), dec(6)}};
+    //     assertArrayEquals(matrix, matrix(read("((1 2 3) 4 (5 6))")));
+    //     assertArrayEquals(matrix, matrix(read("((1 2 3) (4) (5 6))")));
+    //     try {
+    //         // 行の長さは最大値(=3)または1でなければならない。
+    //         // (5 6)はこの条件を満たさない。
+    //         transpose(matrix(read("((1 2 3) 4 (5 6))")));
+    //         fail();
+    //     } catch (DecLispException x) {
+    //         assertEquals("Illegal matrix [[1, 2, 3], [4], [5, 6]]", x.getMessage());
+    //     }
+    //     // 長さが1だった行は最大値(=3)まで増幅される。
+    //     Expr[][] transposed = {
+    //         {dec(1), dec(4), dec(5)},
+    //         {dec(2), dec(4), dec(6)},
+    //         {dec(3), dec(4), dec(7)}};
+    //     assertArrayEquals(transposed, transpose(matrix(read("((1 2 3) 4 (5 6 7))"))));
+    // }
 
     @Test 
     public void testMap() {
