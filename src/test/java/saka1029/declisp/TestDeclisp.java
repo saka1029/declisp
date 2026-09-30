@@ -688,6 +688,7 @@ public class TestDeclisp {
         } catch (DecLispException x) {
             assertEquals("invalid list element '6'", x.getMessage());
         }
+        // error case 3
         try {
             listArgsList(read("((1 2) 3)"));
         } catch (DecLispException x) {

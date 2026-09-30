@@ -822,6 +822,14 @@ public class DecLisp {
             "それぞれの変数に値を割り当てて全ての制約を満たすケースを見つける。");
     }
 
+    /**
+     * argsがリストのリストである場合以下の値を返す。
+     * ((1 2 3) (4 5 6)) -> ((1 4) (2 5) (3 6))
+     * 要素となるリストの長さが異なる場合は最小の長さに合わせて要素を切り捨てる。
+     * ((1 2 3) (4)) -> ((1 4))
+     * 要素がリストでない場合はDecLispExceptionをスローする。
+     * ((1 2 3) 4) -> ERROR
+     */
     static Iterable<Expr> listArgsIterable(Expr args) {
         List<Iterator<Expr>> iterators = new ArrayList<>();
         for (Expr arg : args) {

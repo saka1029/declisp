@@ -51,6 +51,14 @@ public interface Expr extends Iterable<Expr>, Comparable<Expr> {
         return StreamSupport.stream(spliterator(), false);
     }
 
+    /*
+     * thisをリストと見て、その要素を返す。
+     * this = (1 2 . 3)
+     * のように終端がNilでない場合はDecLispExceptionをスローする。
+     * ただしnext()で終端までたどらない場合はこの限りでない。
+     * this = 6
+     * のようにリスト以外の場合もDecLispExceptionをスローする。
+     */
     @Override
     default Iterator<Expr> iterator() {
         return new Iterator<>() {
