@@ -459,7 +459,7 @@ public class DecLisp {
                 if (i >= 0)
                     d = d.add(dec(a[i]), MC);
                 if (j >= 0)
-                    d = add ? d.add(dec(b[j])) : d.subtract(dec(b[j]));
+                    d = add ? d.add(dec(b[j]), MC) : d.subtract(dec(b[j]), MC);
                 c[k] = dec(d);
             }
             return removeLeadingZeros(c);
@@ -471,7 +471,7 @@ public class DecLisp {
         Arrays.fill(c, dec(BigDecimal.ZERO));
         for (int i = al - 1; i >= 0; --i)
             for (int j = bl - 1; j >= 0; --j)
-                c[i + j] = dec(dec(c[i + j]).add(dec(a[i]).multiply(dec(b[j]))));
+                c[i + j] = dec(dec(c[i + j]).add(dec(a[i]).multiply(dec(b[j]), MC), MC));
         return removeLeadingZeros(c);
     };
     public static BinaryOperator<Expr[]> POLYNOMIAL_DIVIDE = (a, b) -> polyDivide(a, b)[0];
@@ -500,13 +500,12 @@ public class DecLisp {
     }
 
     public static Expr polynomial(Expr args, Expr[] unit, BinaryOperator<Expr[]> operator) {
-        // Expr[][] matrix = matrix(args);
-        // if (matrix.length == 0)
-        //     return Nil.NIL;
+        Expr[][] matrix = args.stream()
+            .map(e -> e.isList() ? e.array() : new Expr[] {e})
+            .toArray(Expr[][]::new);
         int count = 0;
         Expr[] result = unit, prev = null;
-        for (Expr a : listArgsIterable(args)) {
-            Expr[] row = a.stream().toArray(Expr[]::new);
+        for (Expr[] row : matrix) {
             result = operator.apply(count == 1 ? prev : result, row);
             prev = row;
             ++count;

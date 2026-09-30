@@ -641,20 +641,20 @@ public class TestDeclisp {
     @Test 
     public void testPolynomial() {
         Env env = defaultEnv();
-        assertEquals(read("()"), eval(env, "(p+)"));
+        assertEquals(read("(0)"), eval(env, "(p+)"));
         assertEquals(read("(1 1)"), eval(env, "(p+ '(1 1))"));
         assertEquals(read("(1 2 1)"), eval(env, "(p+ '(1 0 0) '(2 0) '(1))"));
-        assertEquals(read("()"), eval(env, "(p-)"));
+        assertEquals(read("(0)"), eval(env, "(p-)"));
         assertEquals(read("(-1 -1)"), eval(env, "(p- '(1 1))"));
         assertEquals(read("(1 -2 -1)"), eval(env, "(p- '(1 0 0) '(2 0) '(1))"));
-        assertEquals(read("()"), eval(env, "(p*)"));
+        assertEquals(read("(1)"), eval(env, "(p*)"));
         assertEquals(read("(1 1)"), eval(env, "(p* '(1 1))"));
         assertEquals(read("(1 3 3 1)"), eval(env, "(p* '(1 1) '(1 1) '(1 1))"));
-        assertEquals(read("()"), eval(env, "(p/)"));
+        assertEquals(read("(1)"), eval(env, "(p/)"));
         assertEquals(read("(0)"), eval(env, "(p/ '(1 1))"));
         assertEquals(read("(1)"), eval(env, "(p/ '(1 1) '(1 1))"));
         assertEquals(read("(1 1)"), eval(env, "(p/ '(1 3 3 1) '(1 1) '(1 1))"));
-        assertEquals(read("()"), eval(env, "(p%)"));
+        assertEquals(read("(1)"), eval(env, "(p%)"));
         assertEquals(read("(1)"), eval(env, "(p% '(1 1))"));
         assertEquals(read("(0)"), eval(env, "(p% '(1 1) '(1 1))"));
         assertEquals(read("(0)"), eval(env, "(p% '(1 3 3 1) '(1 1) '(1 1))"));
