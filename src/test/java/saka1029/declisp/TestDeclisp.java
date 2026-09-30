@@ -310,13 +310,9 @@ public class TestDeclisp {
     }
 
     @Test 
-    public void testMap2() {
+    public void testMapEmpty() {
         Env env = defaultEnv();
-        try {
-            assertEquals(read("()"), eval(env, "(map - )"));
-        } catch (DecLispException x) {
-            assertEquals("no arguments", x.getMessage());
-        }
+        assertEquals(read("()"), eval(env, "(map - )"));
     }
 
     @Test 

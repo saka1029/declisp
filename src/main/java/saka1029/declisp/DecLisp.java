@@ -303,16 +303,17 @@ public class DecLisp {
                 throw new DecLispException("'%s' is not a list", arg);
             iterators.add(arg.iterator());
         }
-        if (iterators.isEmpty())
-            throw new DecLispException("no arguments");
         return () -> new Iterator<Expr>() {
             @Override
             public boolean hasNext() {
-                return iterators.stream().allMatch(Iterator::hasNext);
+                return iterators.size() > 0
+                    && iterators.stream().allMatch(Iterator::hasNext);
             }
 
             @Override
             public Expr next() {
+                if (iterators.size() <= 0)
+                    throw new DecLispException("empty list");
                 return list(iterators.stream().map(Iterator::next).toArray(Expr[]::new));
             }
         };
