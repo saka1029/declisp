@@ -319,36 +319,36 @@ public class DecLisp {
         };
     }
 
-    static Expr[] array(Expr arg) {
-        return arg instanceof Nil || arg instanceof Cons
-            ? arg.stream().toArray(Expr[]::new)
-            : new Expr[] {arg};
-    }
+    // static Expr[] array(Expr arg) {
+    //     return arg instanceof Nil || arg instanceof Cons
+    //         ? arg.stream().toArray(Expr[]::new)
+    //         : new Expr[] {arg};
+    // }
 
-    public static Expr[][] matrix(Expr arg) {
-        return Stream.of(array(arg))
-            .map(row -> array(row))
-            .toArray(Expr[][]::new);
-    }
+    // public static Expr[][] matrix(Expr arg) {
+    //     return Stream.of(array(arg))
+    //         .map(row -> array(row))
+    //         .toArray(Expr[][]::new);
+    // }
 
-    static Expr[][] transpose(Expr[][] origin) {
-        int rows = origin.length;
-        if (rows <= 0)
-            return new Expr[][] {};
-        int cols = Stream.of(origin)
-            .mapToInt(r -> r.length)
-            .max().getAsInt();
-        Expr[][] transposed = new Expr[cols][rows];
-        for (int r = 0; r < rows; ++r) {
-            Expr[] row = origin[r];
-            int rowLen = row.length;
-            if (rowLen != cols && rowLen != 1)
-                throw new DecLispException("Illegal matrix %s", Arrays.deepToString(origin));
-            for (int c = 0; c < cols; ++c)
-                transposed[c][r] = c >= rowLen ? row[0] : row[c];
-        }
-        return transposed;
-    }
+    // static Expr[][] transpose(Expr[][] origin) {
+    //     int rows = origin.length;
+    //     if (rows <= 0)
+    //         return new Expr[][] {};
+    //     int cols = Stream.of(origin)
+    //         .mapToInt(r -> r.length)
+    //         .max().getAsInt();
+    //     Expr[][] transposed = new Expr[cols][rows];
+    //     for (int r = 0; r < rows; ++r) {
+    //         Expr[] row = origin[r];
+    //         int rowLen = row.length;
+    //         if (rowLen != cols && rowLen != 1)
+    //             throw new DecLispException("Illegal matrix %s", Arrays.deepToString(origin));
+    //         for (int c = 0; c < cols; ++c)
+    //             transposed[c][r] = c >= rowLen ? row[0] : row[c];
+    //     }
+    //     return transposed;
+    // }
 
     // public static Expr map(Expr arg, Procedure proc) {
     //     Expr[][] matrix = matrix(arg);
