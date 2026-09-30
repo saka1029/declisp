@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
@@ -820,6 +821,11 @@ public class DecLisp {
         ENV.define(sym("solve"), (Applicable) (args, e) -> solve(args, e),
         VT.special, "((変数1 値1)...) (制約1...)",
             "それぞれの変数に値を割り当てて全ての制約を満たすケースを見つける。");
+    }
+
+    static Iterator<Expr> listArgsIterator(Expr args) {
+        List<Iterator<Expr>> iterators = new ArrayList<>();
+
     }
 
     public static Env defaultEnv() {
