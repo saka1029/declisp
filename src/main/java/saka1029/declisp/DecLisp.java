@@ -303,6 +303,8 @@ public class DecLisp {
                 throw new DecLispException("'%s' is not a list", arg);
             iterators.add(arg.iterator());
         }
+        if (iterators.isEmpty())
+            throw new DecLispException("no arguments");
         return () -> new Iterator<Expr>() {
             @Override
             public boolean hasNext() {
@@ -347,13 +349,19 @@ public class DecLisp {
         return transposed;
     }
 
-    public static Expr map(Expr arg, Procedure proc) {
-        Expr[][] matrix = matrix(arg);
-        Expr[][] transposed = transpose(matrix);
-        Expr[] lists = Stream.of(transposed)
-            .map(row -> proc.apply(list(row)))
-            .toArray(Expr[]::new);
-        return list(lists);
+    // public static Expr map(Expr arg, Procedure proc) {
+    //     Expr[][] matrix = matrix(arg);
+    //     Expr[][] transposed = transpose(matrix);
+    //     Expr[] lists = Stream.of(transposed)
+    //         .map(row -> proc.apply(list(row)))
+    //         .toArray(Expr[]::new);
+    //     return list(lists);
+    // }
+    public static Expr map(Expr args, Procedure proc) {
+        List<Expr> result = new ArrayList<>();
+        for (Expr arg : listArgsIterable(args))
+            result.add(proc.apply(arg));
+        return list(result);
     }
 
     static {

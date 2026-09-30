@@ -289,12 +289,17 @@ public class TestDeclisp {
         assertEquals(read("(2 4)"), eval(env, "(map (lambda (x) (+ x x)) '(1 2))"));
         assertEquals(read("(2 4)"), eval(env, "(map (lambda (x) (+ x x)) '(1 2) '(3 4))"));
         assertEquals(read("(-2 -2)"), eval(env, "(map - '(1 2) '(3 4))"));
-        assertEquals(read("(-7 -7)"), eval(env, "(map - '(1 2) '(3 4) 5)"));
-        assertEquals(read("()"), eval(env, "(map - )"));
+        try {
+            eval(env, "(map - '(1 2) '(3 4) 5)");
+            fail();
+        } catch (DecLispException x) {
+            assertEquals("'5' is not a list", x.getMessage());
+        }
         try {
             eval(env, "(map - '(1 2) '() '5)");
+            fail();
         } catch (DecLispException x) {
-            assertEquals("Illegal matrix [[1, 2], [], [5]]", x.getMessage());
+            assertEquals("'5' is not a list", x.getMessage());
         }
         assertEquals(read("(F T)"), eval(env, "(map not '(T F))"));
         assertEquals(read("(T F F F)"), eval(env, "(map and '(T T F F) '(T F T F))"));
@@ -302,6 +307,16 @@ public class TestDeclisp {
         assertEquals(read("(F T T F)"), eval(env, "(map xor '(T T F F) '(T F T F))"));
         assertEquals(read("fact"), eval(env, "(define (fact n) (if (<= n 0) 1 (* n (fact (- n 1)))))"));
         assertEquals(read("(1 1 2 6 24 120)"), eval(env, "(map fact (range 0 6))"));
+    }
+
+    @Test 
+    public void testMap2() {
+        Env env = defaultEnv();
+        try {
+            assertEquals(read("()"), eval(env, "(map - )"));
+        } catch (DecLispException x) {
+            assertEquals("no arguments", x.getMessage());
+        }
     }
 
     @Test 
