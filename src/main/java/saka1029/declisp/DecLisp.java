@@ -729,7 +729,9 @@ public class DecLisp {
             for (Expr digit : args)
                 r = r.multiply(ten).add(dec(digit));
             return dec(r);
-        });
+        },
+        VT.procedure, "桁1 桁2...",
+        "各桁から構成される数を求める。ex. (number 1 2 3) -> 123");
     }
 
     record Constraint(Expr constraint, Set<Symbol> variables) {
