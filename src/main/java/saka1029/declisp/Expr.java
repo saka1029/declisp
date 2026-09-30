@@ -17,6 +17,10 @@ public interface Expr extends Iterable<Expr>, Comparable<Expr> {
         return this.equals(Nil.NIL);
     }
 
+    default boolean isList() {
+        return isNil() || this instanceof Cons;
+    }
+
     default <T> T cast(Class<T> cls) {
         if (cls.isInstance(this))
             return cls.cast(this);

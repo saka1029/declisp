@@ -11,7 +11,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
@@ -823,9 +822,24 @@ public class DecLisp {
             "それぞれの変数に値を割り当てて全ての制約を満たすケースを見つける。");
     }
 
-    static Iterator<Expr> listArgsIterator(Expr args) {
+    static Iterable<Expr> listArgsIterable(Expr args) {
         List<Iterator<Expr>> iterators = new ArrayList<>();
+        for (Expr arg : args) {
+            if (!arg.isList())
+                throw new DecLispException("'%s' is not a list", arg);
+            iterators.add(arg.iterator());
+        }
+        return () -> new Iterator<Expr>() {
+            @Override
+            public boolean hasNext() {
+                return iterators.stream().allMatch(Iterator::hasNext);
+            }
 
+            @Override
+            public Expr next() {
+                return list(iterators.stream().map(Iterator::next).toArray(Expr[]::new));
+            }
+        };
     }
 
     public static Env defaultEnv() {

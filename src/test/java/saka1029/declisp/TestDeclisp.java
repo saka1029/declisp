@@ -5,6 +5,8 @@ import static saka1029.declisp.DecLisp.*;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.StreamSupport;
 
 import static saka1029.declisp.Common.*;
 
@@ -660,5 +662,26 @@ public class TestDeclisp {
         // x = 2 : (x^3 + 3*x^2 + 3*x + 1) = 27
         assertEquals(read("27"), eval(env, "(p= '(1 3 3 1) 2)"));
         assertEquals(read("64"), eval(env, "(p= '(1 3 3 1) 3)"));
+    }
+
+    static List<Expr> listArgsList(Expr args) {
+        return StreamSupport.stream(listArgsIterable(args).spliterator(), false).toList();
+    }
+
+    @Test 
+    public void testListArgsList() {
+        assertEquals(List.of(read("(1 4)"), read("(2 5)"), read("(3 6)")), listArgsList(read("((1 2 3) (4 5 6))")));
+        assertEquals(List.of(read("(1 4)"), read("(2 5)")), listArgsList(read("((1 2 3) (4 5))")));
+        assertEquals(List.of(), listArgsList(read("(() ())")));
+        assertEquals(List.of(), listArgsList(read("(() (3))")));
+        // error case 1
+        assertEquals(List.of(read("(1 4)"), read("(2 5)")), listArgsList(read("((1 2 3) (4 5 . 6))")));
+        // error case 2
+        assertEquals(List.of(read("(1 4)"), read("(2 5)")), listArgsList(read("((1 2 3) (4 5) .6)")));
+        try {
+            listArgsList(read("((1 2) 3)"));
+        } catch (DecLispException x) {
+            assertEquals("'3' is not a list", x.getMessage());
+        }
     }
 }
