@@ -288,6 +288,34 @@ public class DecLisp {
         VT.procedure, "数1 数2", "数1と数2がほぼ等値である。(差の絶対値がDELTA未満である)");
     }
 
+    /**
+     * argsがリストのリストである場合以下の値を返す。
+     * ((1 2 3) (4 5 6)) -> ((1 4) (2 5) (3 6))
+     * 要素となるリストの長さが異なる場合は最小の長さに合わせて要素を切り捨てる。
+     * ((1 2 3) (4)) -> ((1 4))
+     * 要素がリストでない場合はDecLispExceptionをスローする。
+     * ((1 2 3) 4) -> ERROR
+     */
+    static Iterable<Expr> listArgsIterable(Expr args) {
+        List<Iterator<Expr>> iterators = new ArrayList<>();
+        for (Expr arg : args) {
+            if (!arg.isList())
+                throw new DecLispException("'%s' is not a list", arg);
+            iterators.add(arg.iterator());
+        }
+        return () -> new Iterator<Expr>() {
+            @Override
+            public boolean hasNext() {
+                return iterators.stream().allMatch(Iterator::hasNext);
+            }
+
+            @Override
+            public Expr next() {
+                return list(iterators.stream().map(Iterator::next).toArray(Expr[]::new));
+            }
+        };
+    }
+
     static Expr[] array(Expr arg) {
         return arg instanceof Nil || arg instanceof Cons
             ? arg.stream().toArray(Expr[]::new)
@@ -820,34 +848,6 @@ public class DecLisp {
         ENV.define(sym("solve"), (Applicable) (args, e) -> solve(args, e),
         VT.special, "((変数1 値1)...) (制約1...)",
             "それぞれの変数に値を割り当てて全ての制約を満たすケースを見つける。");
-    }
-
-    /**
-     * argsがリストのリストである場合以下の値を返す。
-     * ((1 2 3) (4 5 6)) -> ((1 4) (2 5) (3 6))
-     * 要素となるリストの長さが異なる場合は最小の長さに合わせて要素を切り捨てる。
-     * ((1 2 3) (4)) -> ((1 4))
-     * 要素がリストでない場合はDecLispExceptionをスローする。
-     * ((1 2 3) 4) -> ERROR
-     */
-    static Iterable<Expr> listArgsIterable(Expr args) {
-        List<Iterator<Expr>> iterators = new ArrayList<>();
-        for (Expr arg : args) {
-            if (!arg.isList())
-                throw new DecLispException("'%s' is not a list", arg);
-            iterators.add(arg.iterator());
-        }
-        return () -> new Iterator<Expr>() {
-            @Override
-            public boolean hasNext() {
-                return iterators.stream().allMatch(Iterator::hasNext);
-            }
-
-            @Override
-            public Expr next() {
-                return list(iterators.stream().map(Iterator::next).toArray(Expr[]::new));
-            }
-        };
     }
 
     public static Env defaultEnv() {
