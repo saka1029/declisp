@@ -68,6 +68,7 @@ public class Common {
             throw new DecLispException(x);
         }
     }
+    public static Expr quote(Expr e) { return list(QUOTE, e); }
     public static BigInteger bigInt(BigDecimal d) { return d.toBigInteger(); }
     public static BigInteger bigInt(Expr e) { return dec(e).toBigInteger(); }
 

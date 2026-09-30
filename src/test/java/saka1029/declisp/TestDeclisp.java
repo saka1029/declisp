@@ -283,21 +283,21 @@ public class TestDeclisp {
         Env env = defaultEnv();
         assertEquals(read("-1"), eval(env, "(- 1)"));
         assertEquals(read("(-1 -2)"), eval(env, "(map - '(1 2))"));
-        assertEquals(read("(-1 -2)"), eval(env, "(map - (1 2))"));
+        assertEquals(read("(-1 -2)"), eval(env, "(map - '(1 2))"));
         assertEquals(read("(2 4)"), eval(env, "(map (lambda (x) (+ x x)) '(1 2))"));
-        assertEquals(read("(2 4)"), eval(env, "(map (lambda (x) (+ x x)) '(1 2) (3 4))"));
-        assertEquals(read("(-2 -2)"), eval(env, "(map - (1 2) (3 4))"));
-        assertEquals(read("(-7 -7)"), eval(env, "(map - (1 2) (3 4) 5)"));
+        assertEquals(read("(2 4)"), eval(env, "(map (lambda (x) (+ x x)) '(1 2) '(3 4))"));
+        assertEquals(read("(-2 -2)"), eval(env, "(map - '(1 2) '(3 4))"));
+        assertEquals(read("(-7 -7)"), eval(env, "(map - '(1 2) '(3 4) 5)"));
         assertEquals(read("()"), eval(env, "(map - )"));
         try {
-            eval(env, "(map - (1 2) () 5)");
+            eval(env, "(map - '(1 2) '() '5)");
         } catch (DecLispException x) {
             assertEquals("Illegal matrix [[1, 2], [], [5]]", x.getMessage());
         }
-        assertEquals(read("(F T)"), eval(env, "(map not (T F))"));
-        assertEquals(read("(T F F F)"), eval(env, "(map and (T T F F) (T F T F))"));
-        assertEquals(read("(T T T F)"), eval(env, "(map or (T T F F) (T F T F))"));
-        assertEquals(read("(F T T F)"), eval(env, "(map xor (T T F F) (T F T F))"));
+        assertEquals(read("(F T)"), eval(env, "(map not '(T F))"));
+        assertEquals(read("(T F F F)"), eval(env, "(map and '(T T F F) '(T F T F))"));
+        assertEquals(read("(T T T F)"), eval(env, "(map or '(T T F F) '(T F T F))"));
+        assertEquals(read("(F T T F)"), eval(env, "(map xor '(T T F F) '(T F T F))"));
         assertEquals(read("fact"), eval(env, "(define (fact n) (if (<= n 0) 1 (* n (fact (- n 1)))))"));
         assertEquals(read("(1 1 2 6 24 120)"), eval(env, "(map fact (range 0 6))"));
     }
@@ -428,7 +428,7 @@ public class TestDeclisp {
     @Test 
     public void testApply() {
         Env env = defaultEnv();
-        assertEquals(read("6"), eval(env, "(apply + (1 2 3))"));
+        assertEquals(read("6"), eval(env, "(apply + '(1 2 3))"));
         assertEquals(read("4950"), eval(env, "(apply + (range 100))"));
     }
 
@@ -629,36 +629,36 @@ public class TestDeclisp {
     public void testPolynomial() {
         Env env = defaultEnv();
         assertEquals(read("()"), eval(env, "(p+)"));
-        assertEquals(read("(1 1)"), eval(env, "(p+ (1 1))"));
-        assertEquals(read("(1 2 1)"), eval(env, "(p+ (1 0 0) (2 0) (1))"));
+        assertEquals(read("(1 1)"), eval(env, "(p+ '(1 1))"));
+        assertEquals(read("(1 2 1)"), eval(env, "(p+ '(1 0 0) '(2 0) '(1))"));
         assertEquals(read("()"), eval(env, "(p-)"));
-        assertEquals(read("(-1 -1)"), eval(env, "(p- (1 1))"));
-        assertEquals(read("(1 -2 -1)"), eval(env, "(p- (1 0 0) (2 0) (1))"));
+        assertEquals(read("(-1 -1)"), eval(env, "(p- '(1 1))"));
+        assertEquals(read("(1 -2 -1)"), eval(env, "(p- '(1 0 0) '(2 0) '(1))"));
         assertEquals(read("()"), eval(env, "(p*)"));
-        assertEquals(read("(1 1)"), eval(env, "(p* (1 1))"));
-        assertEquals(read("(1 3 3 1)"), eval(env, "(p* (1 1) (1 1) (1 1))"));
+        assertEquals(read("(1 1)"), eval(env, "(p* '(1 1))"));
+        assertEquals(read("(1 3 3 1)"), eval(env, "(p* '(1 1) '(1 1) '(1 1))"));
         assertEquals(read("()"), eval(env, "(p/)"));
-        assertEquals(read("(0)"), eval(env, "(p/ (1 1))"));
-        assertEquals(read("(1)"), eval(env, "(p/ (1 1) (1 1))"));
-        assertEquals(read("(1 1)"), eval(env, "(p/ (1 3 3 1) (1 1) (1 1))"));
+        assertEquals(read("(0)"), eval(env, "(p/ '(1 1))"));
+        assertEquals(read("(1)"), eval(env, "(p/ '(1 1) '(1 1))"));
+        assertEquals(read("(1 1)"), eval(env, "(p/ '(1 3 3 1) '(1 1) '(1 1))"));
         assertEquals(read("()"), eval(env, "(p%)"));
-        assertEquals(read("(1)"), eval(env, "(p% (1 1))"));
-        assertEquals(read("(0)"), eval(env, "(p% (1 1) (1 1))"));
-        assertEquals(read("(0)"), eval(env, "(p% (1 3 3 1) (1 1) (1 1))"));
-        assertEquals(read("(1 -2)"), eval(env, "(p/ (1 -1 -6) (1 1))"));
-        assertEquals(read("(-4)"), eval(env, "(p% (1 -1 -6) (1 1))"));
-        assertEquals(read("(1 -1 -6)"), eval(env, "(p+ (p* (1 1) (1 -2)) (-4))"));
+        assertEquals(read("(1)"), eval(env, "(p% '(1 1))"));
+        assertEquals(read("(0)"), eval(env, "(p% '(1 1) '(1 1))"));
+        assertEquals(read("(0)"), eval(env, "(p% '(1 3 3 1) '(1 1) '(1 1))"));
+        assertEquals(read("(1 -2)"), eval(env, "(p/ '(1 -1 -6) '(1 1))"));
+        assertEquals(read("(-4)"), eval(env, "(p% '(1 -1 -6) '(1 1))"));
+        assertEquals(read("(1 -1 -6)"), eval(env, "(p+ (p* '(1 1) '(1 -2)) '(-4))"));
     }
 
     @Test
     public void testPolyValue() {
         Env env = defaultEnv();
         // x = 2 : (x + 1) = 3
-        assertEquals(read("3"), eval(env, "(p= (1 1) 2)"));
+        assertEquals(read("3"), eval(env, "(p= '(1 1) 2)"));
         // x = 2 : (x^2 + 2*x + 1) = 9
-        assertEquals(read("9"), eval(env, "(p= (1 2 1) 2)"));
+        assertEquals(read("9"), eval(env, "(p= '(1 2 1) 2)"));
         // x = 2 : (x^3 + 3*x^2 + 3*x + 1) = 27
-        assertEquals(read("27"), eval(env, "(p= (1 3 3 1) 2)"));
-        assertEquals(read("64"), eval(env, "(p= (1 3 3 1) 3)"));
+        assertEquals(read("27"), eval(env, "(p= '(1 3 3 1) 2)"));
+        assertEquals(read("64"), eval(env, "(p= '(1 3 3 1) 3)"));
     }
 }

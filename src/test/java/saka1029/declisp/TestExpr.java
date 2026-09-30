@@ -58,8 +58,9 @@ public class TestExpr {
             return dec(dec(car(evaled)).add(dec(car(cdr(evaled)))));
         });
         assertEquals(dec(3), list(sym("+"), dec(1), dec(2)).eval(env));
-        assertEquals(list(dec(3), dec(1)), list(sym("a"), dec(1)).eval(env));
-        assertEquals(list(Bool.T, dec(3)), list(Bool.T, dec(3)).eval(env));
+        env.define(sym("list"), (Procedure) a -> a);
+        assertEquals(list(dec(3), dec(1)), list(sym("list"), sym("a"), dec(1)).eval(env));
+        assertEquals(list(Bool.T, dec(3)), list(sym("list"), Bool.T, dec(3)).eval(env));
         try {
             new Expr() {
                 @Override
