@@ -47,9 +47,9 @@ public class TestDeclisp {
         Env env = defaultEnv();
         assertEquals(sym("F"), sym("F"));
         assertEquals(list(dec(0), dec(3)), eval(env, "(list '0 3)"));
-        // System.out.println(list(sym("F"), dec(3)));
-        // System.out.println(eval(env, "(list 'F 3)"));
         assertEquals(list(Bool.F, dec(3)), eval(env, "(list 'F 3)"));
+        assertEquals(list(dec(3), Bool.F), eval(env, "(reverse '(F 3))"));
+        assertEquals(list(Bool.F, dec(3), sym("a")), eval(env, "(append '(F 3) '(a))"));
         assertEquals(dec(2), eval(env, "(if F 1 2)"));
         assertEquals(Nil.NIL, eval(env, "(if F 1)"));
         assertEquals(dec(1), eval(env, "(car '(1 a))"));
@@ -108,6 +108,12 @@ public class TestDeclisp {
         assertEquals(dec(0.5), eval(env, "(/ 2)"));
         assertEquals(dec(0.25), eval(env, "(/ 1 4)"));
         assertEquals(dec(4), eval(env, "(/ 24 2 3)"));
+        try {
+            eval(env, "(/ 1 0)");
+            fail();
+        } catch (DecLispException x) {
+            assertEquals("division by 0", x.getMessage());
+        }
         assertEquals(dec(1), eval(env, "(%)"));
         assertEquals(dec(1), eval(env, "(% 2)"));
         assertEquals(dec(1), eval(env, "(% 1 4)"));

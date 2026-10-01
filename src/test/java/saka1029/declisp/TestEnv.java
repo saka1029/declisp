@@ -3,7 +3,6 @@ package saka1029.declisp;
 import static org.junit.Assert.*;
 import static saka1029.declisp.Common.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
