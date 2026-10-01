@@ -128,7 +128,7 @@ public class DecLisp {
             }
             return result;
         }, VT.procedure, "リスト...", "リストを連結する。");
-        ENV.define(sym("apply"), (Procedure) args -> proc(car(args)).apply(car(cdr(args))));
+        ENV.define(sym("apply"), (Procedure) args -> procedure(car(args)).apply(car(cdr(args))));
     }
 
     static {
@@ -329,7 +329,16 @@ public class DecLisp {
     }
 
     static {
-        ENV.define(sym("map"), (Procedure) args -> map(cdr(args), proc(car(args))),
+        ENV.define(sym("map"), (Applicable) (args, e) -> {
+            Expr evaled = args.evlis(e);
+            Expr head = car(evaled);
+            if (head instanceof Procedure p)
+                return map(cdr(evaled), p);
+            else if (head instanceof Applicable a)
+                return map(cdr(evaled), x -> a.apply(x, e));
+            else
+                throw new DecLispException("Illegal function");
+        },
         VT.procedure, "関数 リスト...", "関数をリストの要素に順次適用し、その結果をリストにして返す。");
     }
 
@@ -562,8 +571,8 @@ public class DecLisp {
      * @return
      */
     static Expr minMax(Expr args, Env env) {
-        Procedure LT = proc(env.get(sym("<")));
-        Procedure GT = proc(env.get(sym(">")));
+        Procedure LT = procedure(env.get(sym("<")));
+        Procedure GT = procedure(env.get(sym(">")));
         Expr 評価式 = car(args);                                // 評価式を取り出す。
         List<Entry<Symbol, Expr>> vars = variables(args, env);  // 変数と値の格納領域
         int varSize = vars.size();
