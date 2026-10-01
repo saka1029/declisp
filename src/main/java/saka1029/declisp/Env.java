@@ -1,17 +1,17 @@
 package saka1029.declisp;
 
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
+import java.util.function.Consumer;
 
 public class Env {
     final Map<Symbol, Expr> map = new HashMap<>();
     final Map<Symbol, Help> help = new HashMap<>();
     final Env prev;
+    Consumer<String> out = System.out::println;
 
     public Env() { this.prev = null; }
     public Env(Env prev) { this.prev = prev; }
@@ -33,6 +33,15 @@ public class Env {
                 return value;
         }
         throw new DecLispException("Env.get(): symbol '%s' not found", key);
+    }
+
+    public void out(Consumer<String> out) {
+        for (Env env = this; env != null; env = prev)
+            env.out = out;
+    }
+
+    public void println(Object obj) {
+        out.accept(obj.toString());
     }
 
     public Expr set(Symbol key, Expr value) {

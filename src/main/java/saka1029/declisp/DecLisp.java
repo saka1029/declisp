@@ -53,8 +53,8 @@ public class DecLisp {
     }
 
     static {
-        ENV.define(QUOTE, (Applicable) (args, e) -> car(args));
-            // VT.spec, list(sym("value"), sym("a"), sym("b")), "quoteを除外した値を返す。");
+        ENV.define(QUOTE, (Applicable) (args, e) -> car(args),
+            VT.special, "値", "値を評価せずに返す。");
         ENV.define(LAMBDA, (Applicable) (args, e) -> {
             Expr parms = car(args), body = cdr(args);
             return (Procedure) a -> {
@@ -85,7 +85,7 @@ public class DecLisp {
             String key = args instanceof Cons c ? sym(car(c)).toLowerCase() : "";
             for (Help h : e.sortedHelp())
                 if (h.name().value().toLowerCase().contains(key)) {
-                    System.out.println(h);
+                    e.println(h);
                     ++n;
                 }
             return dec(n);
