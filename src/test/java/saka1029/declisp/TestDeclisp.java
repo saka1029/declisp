@@ -561,7 +561,31 @@ public class TestDeclisp {
         } catch (DecLispException x) {
             assertEquals("variables: duplicated variable 'x'", x.getMessage());
         }
+    }
 
+    @Test 
+    public void testPrimes() {
+        Env env = defaultEnv();
+        assertEquals(read("(2 3 5 7 11 13 17 19 23 29 31 37 41 43 47)"), eval(env, "(primes 50)"));
+    }
+
+    @Test 
+    public void testIsPrime() {
+        Env env = defaultEnv();
+        assertEquals(Bool.F, eval(env, "(isPrime -2)"));
+        assertEquals(Bool.F, eval(env, "(isPrime -1)"));
+        assertEquals(Bool.F, eval(env, "(isPrime 0)"));
+        assertEquals(Bool.F, eval(env, "(isPrime 1)"));
+        assertEquals(Bool.T, eval(env, "(isPrime 2)"));
+        assertEquals(Bool.T, eval(env, "(isPrime 3)"));
+        assertEquals(Bool.F, eval(env, "(isPrime 4)"));
+        assertEquals(Bool.T, eval(env, "(isPrime 5)"));
+        assertEquals(Bool.F, eval(env, "(isPrime 6)"));
+        assertEquals(Bool.T, eval(env, "(isPrime 7)"));
+        assertEquals(Bool.F, eval(env, "(isPrime 8)"));
+        assertEquals(Bool.F, eval(env, "(isPrime 9)"));
+        assertEquals(Bool.F, eval(env, "(isPrime 10)"));
+        assertEquals(Bool.T, eval(env, "(isPrime 11)"));
     }
 
     @Test 

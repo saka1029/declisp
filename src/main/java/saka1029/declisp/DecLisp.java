@@ -84,7 +84,7 @@ public class DecLisp {
             int n = 0;
             String key = args instanceof Cons c ? sym(car(c)).toLowerCase() : "";
             for (Help h : e.sortedHelp())
-                if (h.name.value().toLowerCase().contains(key)) {
+                if (h.name().value().toLowerCase().contains(key)) {
                     System.out.println(h);
                     ++n;
                 }

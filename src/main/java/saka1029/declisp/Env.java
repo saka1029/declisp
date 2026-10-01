@@ -3,6 +3,7 @@ package saka1029.declisp;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -57,8 +58,8 @@ public class Env {
     //     return all;
     // }
 
-    public Collection<Help> sortedHelp() {
-        Map<Symbol, Help> all = new TreeMap<>(Comparator.comparing(Symbol::value));
+    public List<Help> sortedHelp() {
+        Map<Symbol, Help> all = new HashMap<>();
         new Object() {
             void put(Env e) {
                 if (e.prev != null)
@@ -67,7 +68,9 @@ public class Env {
                     all.put(x.getKey(), x.getValue());
             }
         }.put(this);
-        return all.values();
+        return all.values().stream()
+            .sorted(Comparator.comparing(h -> h.name().value()))
+            .toList();
     }
 
     @Override

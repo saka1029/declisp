@@ -68,7 +68,6 @@ public class Common {
             throw new DecLispException(x);
         }
     }
-    public static Expr quote(Expr e) { return list(QUOTE, e); }
     public static BigInteger bigInt(BigDecimal d) { return d.toBigInteger(); }
     public static BigInteger bigInt(Expr e) { return dec(e).toBigInteger(); }
 
@@ -76,7 +75,6 @@ public class Common {
     public static BigDecimal bigDec(BigInteger d) { return new BigDecimal(d); }
     public static BigDecimal dec(Expr e) { return e.cast(Dec.class).value; }
     public static Dec dec(BigDecimal v) { return new Dec(v); }
-    public static Dec dec(BigInteger v) { return new Dec(new BigDecimal(v)); }
     public static Dec dec(double v) { return new Dec(BigDecimal.valueOf(v)); }
 
     public static boolean bool(Expr e) { return !e.equals(Bool.F); }
