@@ -119,6 +119,12 @@ public class TestDeclisp {
         assertEquals(dec(1), eval(env, "(% 1 4)"));
         assertEquals(dec(0), eval(env, "(% 24 2 3)"));
         assertEquals(dec(679), eval(env, "(% 1679 1000)"));
+        try {
+            eval(env, "(% 1 0)");
+            fail();
+        } catch (DecLispException x) {
+            assertEquals("division by 0", x.getMessage());
+        }
     }
 
     @Test 
@@ -584,6 +590,12 @@ public class TestDeclisp {
         assertEquals(Bool.F, eval(env, "(isPrime 9)"));
         assertEquals(Bool.F, eval(env, "(isPrime 10)"));
         assertEquals(Bool.T, eval(env, "(isPrime 11)"));
+    }
+
+    @Test 
+    public void testFactor() {
+        Env env = defaultEnv();
+        assertEquals(read("(7 11 13)"), eval(env, "(factor 1001)"));
     }
 
     @Test 
