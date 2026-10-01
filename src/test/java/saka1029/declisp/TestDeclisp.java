@@ -275,10 +275,9 @@ public class TestDeclisp {
         env.define(sym("aaab"), Nil.NIL, VT.procedure, "arg", "text");
         env.define(sym("ccca"), Nil.NIL, VT.procedure, "arg", "text");
         StringBuilder sb = new StringBuilder();
-        String NL = "\n";
-        env.out = s -> { sb.append(s); sb.append(NL); };
+        env.out = s -> sb.append(s);
         eval(env, "(help aaa)");
-        assertEquals("special (aaaa arg) : text\nprocedure (aaab arg) : text\n", sb.toString());
+        assertEquals("special (aaaa arg) : text%nprocedure (aaab arg) : text%n".formatted(), sb.toString());
         sb.setLength(0);
         eval(env, "(help)");
         assertTrue(sb.toString().contains("quote"));

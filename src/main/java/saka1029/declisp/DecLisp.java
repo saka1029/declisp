@@ -81,17 +81,18 @@ public class DecLisp {
                     : e.define(symbol(car(args)), car(cdr(args)).eval(e), VT.variable, "", "");
         }, VT.special, "グローバル変数名 値", "グローバル変数を定義する。");
         ENV.define(sym("help"), (Applicable) (args, e) -> {
-            int n = 0;
             String key = args instanceof Cons c ? sym(car(c)).toLowerCase() : "";
             for (Help h : e.sortedHelp())
-                if (h.name().value().toLowerCase().contains(key)) {
+                if (h.name().value().toLowerCase().contains(key))
                     e.println(h);
-                    ++n;
-                }
-            return dec(n);
+            return NO_VALUE;
         }, VT.special, "search", "searchを含む関数の説明を表示する。");
         ENV.define(sym("set"), (Applicable) (args, e) -> e.set(symbol(car(args)), car(cdr(args)).eval(e)),
             VT.special, "グローバル変数 値", "グローバル変数に値を代入する。");
+        ENV.define(sym("print"), (Applicable) (args, e) -> e.print(car(args).eval(e)),
+            VT.special, "値", "値を印刷する。(改行なし)");
+        ENV.define(sym("println"), (Applicable) (args, e) -> e.println(car(args).eval(e)),
+            VT.special, "値", "値を印刷する。(改行あり)");
     }
 
     static {
@@ -320,45 +321,6 @@ public class DecLisp {
         };
     }
 
-    // static Expr[] array(Expr arg) {
-    //     return arg instanceof Nil || arg instanceof Cons
-    //         ? arg.stream().toArray(Expr[]::new)
-    //         : new Expr[] {arg};
-    // }
-
-    // public static Expr[][] matrix(Expr arg) {
-    //     return Stream.of(array(arg))
-    //         .map(row -> array(row))
-    //         .toArray(Expr[][]::new);
-    // }
-
-    // static Expr[][] transpose(Expr[][] origin) {
-    //     int rows = origin.length;
-    //     if (rows <= 0)
-    //         return new Expr[][] {};
-    //     int cols = Stream.of(origin)
-    //         .mapToInt(r -> r.length)
-    //         .max().getAsInt();
-    //     Expr[][] transposed = new Expr[cols][rows];
-    //     for (int r = 0; r < rows; ++r) {
-    //         Expr[] row = origin[r];
-    //         int rowLen = row.length;
-    //         if (rowLen != cols && rowLen != 1)
-    //             throw new DecLispException("Illegal matrix %s", Arrays.deepToString(origin));
-    //         for (int c = 0; c < cols; ++c)
-    //             transposed[c][r] = c >= rowLen ? row[0] : row[c];
-    //     }
-    //     return transposed;
-    // }
-
-    // public static Expr map(Expr arg, Procedure proc) {
-    //     Expr[][] matrix = matrix(arg);
-    //     Expr[][] transposed = transpose(matrix);
-    //     Expr[] lists = Stream.of(transposed)
-    //         .map(row -> proc.apply(list(row)))
-    //         .toArray(Expr[]::new);
-    //     return list(lists);
-    // }
     public static Expr map(Expr args, Procedure proc) {
         List<Expr> result = new ArrayList<>();
         for (Expr arg : listArgsIterable(args))

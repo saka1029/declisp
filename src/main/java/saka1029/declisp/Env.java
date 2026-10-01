@@ -1,5 +1,7 @@
 package saka1029.declisp;
 
+import static saka1029.declisp.Common.NO_VALUE;
+
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +13,7 @@ public class Env {
     final Map<Symbol, Expr> map = new HashMap<>();
     final Map<Symbol, Help> help = new HashMap<>();
     final Env prev;
-    Consumer<String> out = System.out::println;
+    Consumer<String> out = System.out::print;
 
     public Env() { this.prev = null; }
     public Env(Env prev) { this.prev = prev; }
@@ -40,8 +42,14 @@ public class Env {
             env.out = out;
     }
 
-    public void println(Object obj) {
+    public Expr print(Object obj) {
         out.accept(obj.toString());
+        return NO_VALUE;
+    }
+
+    public Expr println(Object obj) {
+        out.accept("%s%n".formatted(obj));
+        return NO_VALUE;
     }
 
     public Expr set(Symbol key, Expr value) {
@@ -53,19 +61,6 @@ public class Env {
         }
         throw new DecLispException("Env.set(): symbol '%s' not found", key);
     }
-
-    // public Map<Symbol, Expr> sortedMap() {
-    //     Map<Symbol, Expr> all = new TreeMap<>(Comparator.comparing(Symbol::value));
-    //     new Object() {
-    //         void put(Env e) {
-    //             if (e.prev != null)
-    //                 put(e.prev);
-    //             for (Entry<Symbol, Expr> x : e.map.entrySet())
-    //                 all.put(x.getKey(), x.getValue());
-    //         }
-    //     }.put(this);
-    //     return all;
-    // }
 
     public List<Help> sortedHelp() {
         Map<Symbol, Help> all = new HashMap<>();

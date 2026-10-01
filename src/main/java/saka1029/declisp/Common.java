@@ -16,6 +16,12 @@ public class Common {
     public static BigDecimal delta(BigDecimal delta) { return DELTA = delta; }
     public static final Symbol QUOTE = sym("quote");
     public static final Symbol LAMBDA = sym("lambda");
+    public static final Expr NO_VALUE = new Expr() {
+        @Override
+        public String toString() {
+            return "";
+        }
+    };
 
     public static Symbol sym(String name) { return new Symbol(name);}
     public static String sym(Expr e) { return e.cast(Symbol.class).value(); }
