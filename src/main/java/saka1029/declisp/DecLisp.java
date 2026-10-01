@@ -89,9 +89,9 @@ public class DecLisp {
         }, VT.special, "search", "searchを含む関数の説明を表示する。");
         ENV.define(sym("set"), (Applicable) (args, e) -> e.set(symbol(car(args)), car(cdr(args)).eval(e)),
             VT.special, "グローバル変数 値", "グローバル変数に値を代入する。");
-        ENV.define(sym("print"), (Applicable) (args, e) -> e.print(car(args).eval(e)),
+        ENV.define(sym("print"), (Procedure) args -> ENV.print(car(args)),
             VT.special, "値", "値を印刷する。(改行なし)");
-        ENV.define(sym("println"), (Applicable) (args, e) -> e.println(car(args).eval(e)),
+        ENV.define(sym("println"), (Procedure) args -> ENV.println(car(args)),
             VT.special, "値", "値を印刷する。(改行あり)");
     }
 
