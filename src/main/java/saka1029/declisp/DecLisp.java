@@ -655,30 +655,30 @@ public class DecLisp {
         VT.special, "評価式 (変数1 値1)...",
             "それぞれの変数に値を割り当てたときに評価式の値が最大および最小となるケースを見つける。");
     }
-    public static Expr factor(Expr d) {
-        BigInteger num = bigInt(d).abs();
-        if (num.equals(BigInteger.ZERO))
-            throw new DecLispException("Cannot factor zero");
-        List<Expr> result = new ArrayList<>();
-        BigInteger max = num.sqrt();
-        for (BigInteger den = BigInteger.TWO; den.compareTo(max) <= 0; den = den.add(BigInteger.ONE)) {
-            boolean divided = false;
-            while (true) {
-                BigInteger[] r = num.divideAndRemainder(den);
-                // System.out.printf("%s/%s = %s...%s%n", num, den, r[0], r[1]);
-                if (!r[1].equals(BigInteger.ZERO))
-                    break;
-                divided = true;
-                num = r[0];
-                result.add(dec(bigDec(den)));
-            }
-            if (divided)
-                max = num.sqrt();
-        }
-        if (!num.equals(BigInteger.ONE))
-            result.add(dec(bigDec(num)));
-        return list(result);
-    }
+    // public static Expr factor(Expr d) {
+    //     BigInteger num = bigInt(d).abs();
+    //     if (num.equals(BigInteger.ZERO))
+    //         throw new DecLispException("Cannot factor zero");
+    //     List<Expr> result = new ArrayList<>();
+    //     BigInteger max = num.sqrt();
+    //     for (BigInteger den = BigInteger.TWO; den.compareTo(max) <= 0; den = den.add(BigInteger.ONE)) {
+    //         boolean divided = false;
+    //         while (true) {
+    //             BigInteger[] r = num.divideAndRemainder(den);
+    //             // System.out.printf("%s/%s = %s...%s%n", num, den, r[0], r[1]);
+    //             if (!r[1].equals(BigInteger.ZERO))
+    //                 break;
+    //             divided = true;
+    //             num = r[0];
+    //             result.add(dec(bigDec(den)));
+    //         }
+    //         if (divided)
+    //             max = num.sqrt();
+    //     }
+    //     if (!num.equals(BigInteger.ONE))
+    //         result.add(dec(bigDec(num)));
+    //     return list(result);
+    // }
 
     static {
         ENV.define(sym("isPrime"), (Procedure) args -> {
@@ -735,6 +735,22 @@ public class DecLisp {
             return list(result);
         },
         VT.procedure, "整数", "整数の素因数を返します。");
+        ENV.define(sym("divisor"), (Procedure) args -> {
+            // public static BigDecimal[] divisor(BigDecimal[] decs) {
+            BigInteger i = bigInt(car(args)).abs();
+            Set<BigInteger> set = new HashSet<>();
+            if (i.equals(BigInteger.ZERO))
+                set.add(BigInteger.ZERO);
+            else 
+                for (BigInteger j = i.sqrt(); j.compareTo(BigInteger.ZERO) > 0; j = j.subtract(BigInteger.ONE)) {
+                    BigInteger[] x = i.divideAndRemainder(j);
+                    if (x[1].equals(BigInteger.ZERO)) {
+                        set.add(j);
+                        set.add(x[0]);
+                    }
+            }
+            return list(set.stream().sorted().map(j -> (Expr)dec(bigDec(j))).toList());
+        }, VT.procedure, "整数", "整数の約数を列挙します。");
     }
 
     static BigDecimal permutation(BigDecimal n, BigDecimal r) {
