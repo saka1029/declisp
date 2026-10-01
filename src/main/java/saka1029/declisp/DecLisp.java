@@ -337,7 +337,7 @@ public class DecLisp {
             else if (head instanceof Applicable a)
                 return map(cdr(evaled), x -> a.apply(x, e));
             else
-                throw new DecLispException("Illegal function");
+                throw new DecLispException("illegal function");
         },
         VT.procedure, "関数 リスト...", "関数をリストの要素に順次適用し、その結果をリストにして返す。");
     }
