@@ -33,9 +33,10 @@ public class TestEnv {
     @Test 
     public void testSortedHelp() {
         Env env = new Env();
+        env.define(sym("b"), Nil.NIL, VT.procedure, "args", "text");
+        env = new Env(env);
         env.define(sym("z"), Nil.NIL, VT.procedure, "args", "text");
         env.define(sym("a"), Nil.NIL, VT.procedure, "args", "text");
-        env.define(sym("b"), Nil.NIL, VT.procedure, "args", "text");
         assertEquals(List.of(
             new Help(VT.procedure, sym("a"), "args", "text"),
             new Help(VT.procedure, sym("b"), "args", "text"),
