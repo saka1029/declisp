@@ -3,7 +3,6 @@ package saka1029.declisp;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.junit.Test;
@@ -11,10 +10,10 @@ import org.junit.Test;
 public class TestPermutation {
 
     static void print(int[] array, int r) {
-        String result = IntStream.range(0, r)
-            .mapToObj(i -> Integer.toString(array[i]))
-            .collect(Collectors.joining(", ", "[", "]"));
-        System.out.println(result);
+        // String result = IntStream.range(0, r)
+        //     .mapToObj(i -> Integer.toString(array[i]))
+        //     .collect(Collectors.joining(", ", "[", "]"));
+        // System.out.println(result);
     }
 
     static void permutationBySwap(int n, int r) {
