@@ -2,6 +2,7 @@ package saka1029.declisp;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -61,4 +62,32 @@ public class TestPermutation {
         permutationBySet(4, 4, a -> System.out.println(Arrays.toString(a)));
     }
 
+    static void permutationByBitMap(int n, int r, Consumer<int[]> callback) {
+        Objects.checkIndex(n, Long.SIZE + 1);
+        Objects.checkIndex(r, n + 1);
+        int[] array = new int[n];
+        new Object () {
+            long used = 0;
+            void solve(int index) {
+                if (index >= r)
+                    callback.accept(Arrays.copyOfRange(array, 0, r));
+                else {
+                    int i;
+                    long bit;
+                    for (long rest = ~used; (i = Long.numberOfTrailingZeros(rest)) < n; rest &= ~bit) {
+                        bit = 1 << i;
+                        used |= bit;
+                        array[index] = i;
+                        solve(index + 1);
+                        used &= ~bit;
+                    }
+                }
+            }
+        }.solve(0);
+    }
+
+    @Test 
+    public void testPermutationByBitMap() {
+        permutationByBitMap(4, 4, a -> System.out.println(Arrays.toString(a)));
+    }
 }
