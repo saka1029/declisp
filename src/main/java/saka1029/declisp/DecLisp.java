@@ -131,6 +131,26 @@ public class DecLisp {
         ENV.define(sym("apply"), (Procedure) args -> procedure(car(args)).apply(car(cdr(args))));
     }
 
+    static Expr at(Expr[] array, Expr index) {
+        int i = toInt(dec(index));
+        if (i < 0 || i >= array.length)
+            throw new DecLispException("index '%d' out of bounds", i);
+        return array[i];
+    }
+
+    static {
+        ENV.define(sym("at"), (Procedure) args -> {
+            Expr first = car(args);
+            Expr second = car(cdr(args));
+            Expr[] list = first.array();
+            return car(cdr(args)).isList()
+                ?  list(second.stream().map(i -> at(list,i)).toList())
+                : at(list, car(cdr(args)));
+        }, VT.procedure, "リスト 位置",
+            "リストから指定位置の要素を取り出す(先頭は0)。"
+            + "位置としてリストを指定した場合はそれぞれの要素を取り出してリストにして返す。");
+    }
+
     static {
         ENV.define(sym("not"), (Procedure) args -> bool(!bool(car(args))),
             VT.procedure, "a", "aがFのときTを返す。それ以外の時Fを返す。");
@@ -896,6 +916,39 @@ public class DecLisp {
         ENV.define(sym("solve"), (Applicable) (args, e) -> solve(args, e),
         VT.special, "((変数1 値1)...) (制約1...)",
             "それぞれの変数に値を割り当てて全ての制約を満たすケースを見つける。");
+    }
+
+    static void permutation(int n, int r, Procedure callback) {
+        Expr[] array = new Expr[n];
+        new Object () {
+            long used = 0;
+            void solve(int index) {
+                int i;
+                long bit;
+                if (index >= r)             // r個の組み合わせが見つかった。
+                    callback.apply(list(list(Arrays.copyOfRange(array, 0, r))));
+                else
+                    // Long.numberOfTrailingZeros(rest)はrestにおいて末尾に連続する0ビットの数を数える。
+                    // つまりrestにおける最右端の1ビットのビット位置を求める。
+                    for (long rest = ~used; (i = Long.numberOfTrailingZeros(rest)) < n; rest &= ~bit) {
+                        bit = 1 << i;       // iのビット表現を得る。
+                        used |= bit;        // usedにiを追加する。
+                        array[index] = dec(i);   // 結果にiを追加する。
+                        solve(index + 1);   // indexより後の結果を求める。
+                        used &= ~bit;       // usedからiを除外する。
+                    }
+            }
+        }.solve(0);
+    }
+
+    static {
+        ENV.define(sym("permutation"), (Procedure) args -> {
+            int n = toInt(dec(car(args)));
+            int r = toInt(dec(car(cdr(args))));
+            Procedure p = procedure(car(cdr(cdr(args))));
+            permutation(n, r, p);
+            return NO_VALUE;
+        });
     }
 
     public static Env defaultEnv() {
