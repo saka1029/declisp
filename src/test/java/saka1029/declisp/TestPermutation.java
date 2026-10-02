@@ -1,22 +1,33 @@
 package saka1029.declisp;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import org.junit.Test;
 
 public class TestPermutation {
 
-    static void print(int[] array, int r) {
-        // String result = IntStream.range(0, r)
-        //     .mapToObj(i -> Integer.toString(array[i]))
-        //     .collect(Collectors.joining(", ", "[", "]"));
-        // System.out.println(result);
+    interface Perm {
+        void run(int n, int r, Consumer<int[]> callback);
     }
 
-    static void permutationBySwap(int n, int r) {
+    static int[][] permutation(Perm body, int n, int r) {
+        List<int[]> result = new ArrayList<>();
+        body.run(n, r, a -> result.add(Arrays.copyOfRange(a, 0, r)));
+        return result.stream().toArray(int[][]::new);
+    }
+
+    static void permutationBySwap(int n, int r, Consumer<int[]> callback) {
         int[] array = IntStream.range(0, n).toArray();
         new Object() {
             void swap(int i, int j) {
@@ -26,7 +37,7 @@ public class TestPermutation {
             }
             void solve(int index) {
                 if (index >= r)
-                    print(array, r);
+                    callback.accept(array);
                 else
                     for (int i = index; i < n; ++i) {
                         swap(index, i);
@@ -37,22 +48,39 @@ public class TestPermutation {
         }.solve(0);
     }
 
+    static final int[][] PERM_4_0 = new int[][] {{}};
+    static final int[][] PERM_4_1 = new int[][] {{0}, {1}, {2}, {3}};
+    static final int[][] PERM_4_3 = new int[][] {
+        {0, 1, 2}, {0, 1, 3}, {0, 2, 1}, {0, 2, 3}, {0, 3, 1}, {0, 3, 2},
+        {1, 0, 2}, {1, 0, 3}, {1, 2, 0}, {1, 2, 3}, {1, 3, 0}, {1, 3, 2},
+        {2, 0, 1}, {2, 0, 3}, {2, 1, 0}, {2, 1, 3}, {2, 3, 0}, {2, 3, 1},
+        {3, 0, 1}, {3, 0, 2}, {3, 1, 0}, {3, 1, 2}, {3, 2, 0}, {3, 2, 1}};
+    static final int[][] SWAP_PERM_4_3 = new int[][] {
+        {0, 1, 2}, {0, 1, 3}, {0, 2, 1}, {0, 2, 3}, {0, 3, 2}, {0, 3, 1},
+        {1, 0, 2}, {1, 0, 3}, {1, 2, 0}, {1, 2, 3}, {1, 3, 2}, {1, 3, 0},
+        {2, 1, 0}, {2, 1, 3}, {2, 0, 1}, {2, 0, 3}, {2, 3, 0}, {2, 3, 1},
+        {3, 1, 2}, {3, 1, 0}, {3, 2, 1}, {3, 2, 0}, {3, 0, 2}, {3, 0, 1}};
+    static final int[][] PERM_64_1 = IntStream.range(0, 64)
+        .mapToObj(i -> new int[]{i})
+        .toArray(int[][]::new);
+
     @Test 
     public void testPermutationBySwap() {
-        System.out.println("permutationBySwap(4, 0):");
-        permutationBySwap(4, 0);
-        System.out.println("permutationBySwap(4, 4):");
-        // 結果の順序が他と違う点に注意する。
-        permutationBySwap(4, 4);
+        assertArrayEquals(PERM_4_0, permutation(TestPermutation::permutationBySwap, 4, 0));
+        assertArrayEquals(PERM_4_1, permutation(TestPermutation::permutationBySwap, 4, 1));
+        assertArrayEquals(SWAP_PERM_4_3, permutation(TestPermutation::permutationBySwap, 4, 3));
+        assertArrayEquals(PERM_64_1, permutation(TestPermutation::permutationBySwap, 64, 1));
     }
 
-    static void permutationBySet(int n, int r) {
+    static void permutationBySet(int n, int r, Consumer<int[]> callback) {
+        if (n < 0) throw new IndexOutOfBoundsException("must 0 <= n");
+        if (r < 0 || r > n) throw new IndexOutOfBoundsException("must 0 <= r <= n");
         int[] array = new int[n];
         Set<Integer> used = new HashSet<>();
         new Object() {
             void solve(int index) {
                 if (index >= r)
-                    print(array, r);
+                    callback.accept(array);
                 else
                     for (int i = 0; i < n; ++i) {
                         if (!used.contains(i)) {
@@ -68,10 +96,10 @@ public class TestPermutation {
 
     @Test 
     public void testPermutationBySet() {
-        System.out.println("permutationBySet(4, 0):");
-        permutationBySet(4, 0);
-        System.out.println("permutationBySet(4, 4):");
-        permutationBySet(4, 4);
+        assertArrayEquals(PERM_4_0, permutation(TestPermutation::permutationBySet, 4, 0));
+        assertArrayEquals(PERM_4_1, permutation(TestPermutation::permutationBySet, 4, 1));
+        assertArrayEquals(PERM_4_3, permutation(TestPermutation::permutationBySet, 4, 3));
+        assertArrayEquals(PERM_64_1, permutation(TestPermutation::permutationBySet, 64, 1));
     }
 
     /**
@@ -79,7 +107,9 @@ public class TestPermutation {
      * 基本的にはpermutationBySetと同じであるが、
      * ループ内で空振りすることがない点が異なる。
      */
-    static void permutationByBitMap(int n, int r) {
+    static void permutationByBitMap(int n, int r, Consumer<int[]> callback) {
+        if (n < 0 || n > Long.SIZE) throw new IndexOutOfBoundsException("must 0 <= n <= 64");
+        if (r < 0 || r > n) throw new IndexOutOfBoundsException("must 0 <= r <= n");
         Objects.checkIndex(n, Long.SIZE + 1);   // longを[1...32]の集合として扱うため。
         Objects.checkIndex(r, n + 1);
         int[] array = new int[n];
@@ -89,12 +119,12 @@ public class TestPermutation {
                 int i;
                 long bit;
                 if (index >= r)             // r個の組み合わせが見つかった。
-                    print(array, r);
+                    callback.accept(array);
                 else
                     // Long.numberOfTrailingZeros(rest)はrestにおいて末尾に連続する0ビットの数を数える。
                     // つまりrestにおける最右端の1ビットのビット位置を求める。
                     for (long rest = ~used; (i = Long.numberOfTrailingZeros(rest)) < n; rest &= ~bit) {
-                        bit = 1 << i;       // iのビット表現を得る。
+                        bit = 1L << i;       // iのビット表現を得る。
                         used |= bit;        // usedにiを追加する。
                         array[index] = i;   // 結果にiを追加する。
                         solve(index + 1);   // indexより後の結果を求める。
@@ -106,11 +136,38 @@ public class TestPermutation {
 
     @Test 
     public void testPermutationByBitMap() {
-        System.out.println("permutationByBitMap(0, 0):");
-        permutationByBitMap(0, 0);
-        System.out.println("permutationByBitMap(4, 2):");
-        permutationByBitMap(4, 2);
-        System.out.println("permutationByBitMap(4, 4):");
-        permutationByBitMap(4, 4);
+        assertArrayEquals(PERM_4_0, permutation(TestPermutation::permutationByBitMap, 4, 0));
+        assertArrayEquals(PERM_4_1, permutation(TestPermutation::permutationByBitMap, 4, 1));
+        assertArrayEquals(PERM_4_3, permutation(TestPermutation::permutationByBitMap, 4, 3));
+        assertArrayEquals(PERM_64_1, permutation(TestPermutation::permutationByBitMap, 64, 1));
+    }
+
+    static void permutationByBitSet(int n, int r, Consumer<int[]> callback) {
+        if (n < 0) throw new IndexOutOfBoundsException("must 0 <= n");
+        if (r < 0 || r > n) throw new IndexOutOfBoundsException("must 0 <= r <= n");
+        int[] array = new int[n];
+        new Object () {
+            BitSet used = new BitSet(n);
+            void solve(int index) {
+                int i;
+                if (index >= r)
+                    callback.accept(array);
+                else
+                    for (BitSet loop = (BitSet)used.clone(); (i = loop.nextClearBit(0)) < n; loop.set(i)) {
+                        used.set(i, true);
+                        array[index] = i;
+                        solve(index + 1);
+                        used.set(i, false);
+                    }
+            }
+        }.solve(0);
+    }
+
+    @Test 
+    public void testPermutationByBitSet() {
+        assertArrayEquals(PERM_4_0, permutation(TestPermutation::permutationByBitSet, 4, 0));
+        assertArrayEquals(PERM_4_1, permutation(TestPermutation::permutationByBitSet, 4, 1));
+        assertArrayEquals(PERM_4_3, permutation(TestPermutation::permutationByBitSet, 4, 3));
+        assertArrayEquals(PERM_64_1, permutation(TestPermutation::permutationByBitSet, 64, 1));
     }
 }
