@@ -68,12 +68,13 @@ public class TestPermutation {
         int[] array = new int[n];
         new Object () {
             long used = 0;
+            int i;
             void solve(int index) {
+                long bit;
+                int i;
                 if (index >= r)
                     callback.accept(Arrays.copyOfRange(array, 0, r));
-                else {
-                    int i;
-                    long bit;
+                else
                     for (long rest = ~used; (i = Long.numberOfTrailingZeros(rest)) < n; rest &= ~bit) {
                         bit = 1 << i;
                         used |= bit;
@@ -81,7 +82,6 @@ public class TestPermutation {
                         solve(index + 1);
                         used &= ~bit;
                     }
-                }
             }
         }.solve(0);
     }
