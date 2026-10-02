@@ -75,6 +75,11 @@ public class TestPermutation {
         permutationBySet(4, 4);
     }
 
+    /**
+     * long値の各ビットをintの集合として処理する方式
+     * 基本的にはpermutationBySetと同じであるが、
+     * ループ内で空振りすることがない点が異なる。
+     */
     static void permutationByBitMap(int n, int r) {
         Objects.checkIndex(n, Long.SIZE + 1);   // longを[1...32]の集合として扱うため。
         Objects.checkIndex(r, n + 1);
