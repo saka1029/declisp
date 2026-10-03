@@ -30,7 +30,7 @@ public class TestDeclisp {
         assertEquals(Bool.F, eval(env,"(&& 3 F)"));
         assertEquals(Bool.F, eval(env,"(&& 1 2 F)"));
         assertEquals(dec(3), eval(env,"(&& 1 2 3)"));
-        assertEquals(list(dec(1), Bool.F, dec(3)), eval(env,"(&& (1 F 3))"));
+        assertEquals(list(dec(1), Bool.F, dec(3)), eval(env,"(&& '(1 F 3))"));
         assertEquals(Bool.F, eval(env,"(||)"));
         assertEquals(Bool.T, eval(env,"(|| T)"));
         assertEquals(Bool.T, eval(env,"(|| T T)"));

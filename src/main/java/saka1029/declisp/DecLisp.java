@@ -97,10 +97,20 @@ public class DecLisp {
     }
 
     static {
-        ENV.define(sym("&&"), (Applicable) (args, e) -> insertArith(args, Bool.T, (x, y) -> bool(x) ? y : x),
-            VT.special, "args...", "argsを左から順に評価して最初のFでないものを返す。");
-        ENV.define(sym("||"), (Applicable) (args, e) -> insertArith(args, Bool.F, (x, y) -> bool(x) ? x : y),
-            VT.special, "args...", "argsを左から順に評価して最初のFを返す。");
+        ENV.define(sym("&&"), (Applicable) (args, e) -> {
+            Expr last = Bool.T;
+            for (Expr x : args)
+                if (!bool(last = x.eval(e)))
+                    return last;
+            return last;
+        }, VT.special, "args...", "argsを左から順に評価して最初のFでないものを返す。");
+        ENV.define(sym("||"), (Applicable) (args, e) -> {
+            Expr last = Bool.F;
+            for (Expr x : args)
+                if (bool(last = x.eval(e)))
+                    return last;
+            return last;
+        }, VT.special, "args...", "argsを左から順に評価して最初のFを返す。");
     }
 
     static {

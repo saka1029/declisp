@@ -1,0 +1,8 @@
+(permutation 10 8
+    (lambda (x)
+        (map define '(s e n d m o r y) x)
+        (if (&& (!= s 0) (!= m 0)
+            (= (+ (number s e n d) (number m o r e)) (number m o n e y)))
+            (println x))))
+(9 5 6 7 1 0 8 2)   <- 得られた解
+1814400             <- 調べた順列の数(戻り値)
