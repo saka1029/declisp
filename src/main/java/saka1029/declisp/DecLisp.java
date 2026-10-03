@@ -931,13 +931,14 @@ public class DecLisp {
                 if (index >= r) {
                     callback.apply(list(list(Arrays.copyOfRange(array, 0, r))));
                     ++count;
-                } else
+                } else {
                     for (BitSet loop = (BitSet)used.clone(); (i = loop.nextClearBit(0)) < n; loop.set(i)) {
                         used.set(i);
                         array[index] = dec(i);
                         solve(index + 1);
                         used.clear(i);
                     }
+                }
             }
         };
         obj.solve(0);
