@@ -6,6 +6,7 @@ import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -918,27 +919,29 @@ public class DecLisp {
             "それぞれの変数に値を割り当てて全ての制約を満たすケースを見つける。");
     }
 
-    static void permutation(int n, int r, Procedure callback) {
+    static int permutation(int n, int r, Procedure callback) {
+        if (n < 0) throw new DecLispException("must 0 <= n");
+        if (r < 0 || r > n) throw new DecLispException("must 0 <= r <= n");
         Expr[] array = new Expr[n];
-        new Object () {
-            long used = 0;
+        var obj = new Object () {
+            int count = 0;
+            BitSet used = new BitSet(n);
             void solve(int index) {
                 int i;
-                long bit;
-                if (index >= r)             // r個の組み合わせが見つかった。
+                if (index >= r) {
                     callback.apply(list(list(Arrays.copyOfRange(array, 0, r))));
-                else
-                    // Long.numberOfTrailingZeros(rest)はrestにおいて末尾に連続する0ビットの数を数える。
-                    // つまりrestにおける最右端の1ビットのビット位置を求める。
-                    for (long rest = ~used; (i = Long.numberOfTrailingZeros(rest)) < n; rest &= ~bit) {
-                        bit = 1 << i;       // iのビット表現を得る。
-                        used |= bit;        // usedにiを追加する。
-                        array[index] = dec(i);   // 結果にiを追加する。
-                        solve(index + 1);   // indexより後の結果を求める。
-                        used &= ~bit;       // usedからiを除外する。
+                    ++count;
+                } else
+                    for (BitSet loop = (BitSet)used.clone(); (i = loop.nextClearBit(0)) < n; loop.set(i)) {
+                        used.set(i);
+                        array[index] = dec(i);
+                        solve(index + 1);
+                        used.clear(i);
                     }
             }
-        }.solve(0);
+        };
+        obj.solve(0);
+        return obj.count;
     }
 
     static {
@@ -946,8 +949,8 @@ public class DecLisp {
             int n = toInt(dec(car(args)));
             int r = toInt(dec(car(cdr(args))));
             Procedure p = procedure(car(cdr(cdr(args))));
-            permutation(n, r, p);
-            return NO_VALUE;
+            int count = permutation(n, r, p);
+            return dec(count);
         });
     }
 

@@ -1,7 +1,6 @@
 package saka1029.declisp;
 
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -154,10 +153,10 @@ public class TestPermutation {
                     callback.accept(array);
                 else
                     for (BitSet loop = (BitSet)used.clone(); (i = loop.nextClearBit(0)) < n; loop.set(i)) {
-                        used.set(i, true);
+                        used.set(i);
                         array[index] = i;
                         solve(index + 1);
-                        used.set(i, false);
+                        used.clear(i);
                     }
             }
         }.solve(0);
