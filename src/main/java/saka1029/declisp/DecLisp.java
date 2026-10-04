@@ -1,5 +1,6 @@
 package saka1029.declisp;
 
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.DateTimeException;
@@ -17,6 +18,11 @@ import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import saka1029.csp.FukumenParser;
+import saka1029.csp.Solver;
+import saka1029.csp.JavaCompilerInMemory.CompileError;
 
 import static ch.obermuhlner.math.big.BigDecimalMath.*;
 import static saka1029.declisp.Common.*;
@@ -656,6 +662,23 @@ public class DecLisp {
         ENV.define(sym("min-max"), (Applicable) (args, e) -> minMax(args, e),
         VT.special, "評価式 (変数1 値1)...",
             "それぞれの変数に値を割り当てたときに評価式の値が最大および最小となるケースを見つける。");
+    }
+
+    static {
+        ENV.define(sym("fukumen"), (Procedure) args -> {
+            String s = args.toString().replaceAll("^\\(|\\)$", "");
+            try {
+                List<Expr> result = new ArrayList<>();
+                Solver solver = FukumenParser.parse(s).solver();
+                result.add(list(Stream.of(solver.variables()).map(x -> (Expr)sym(x)).toArray(Expr[]::new)));
+                solver.solve(x -> result.add(list(IntStream.of(x).mapToObj(i -> (Expr)dec(i)).toArray(Expr[]::new))));
+                return list(result);
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | SecurityException
+                    | ClassNotFoundException | CompileError | InstantiationException | IllegalArgumentException e) {
+                throw new DecLispException(e);
+            }
+        },
+        VT.procedure, "計算式", "覆面算を解く。");
     }
     // public static Expr factor(Expr d) {
     //     BigInteger num = bigInt(d).abs();
