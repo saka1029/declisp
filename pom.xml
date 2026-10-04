@@ -48,6 +48,12 @@
       <version>2.3.2</version>
     </dependency>
 
+    <dependency>
+      <groupId>saka1029.csp</groupId>
+      <artifactId>csp</artifactId>
+      <version>1.0</version>
+    </dependency>
+
  </dependencies>
 
   <build>
