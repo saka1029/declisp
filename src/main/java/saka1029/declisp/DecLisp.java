@@ -18,10 +18,8 @@ import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import saka1029.csp.FukumenParser;
-import saka1029.csp.Solver;
 import saka1029.csp.JavaCompilerInMemory.CompileError;
 
 import static ch.obermuhlner.math.big.BigDecimalMath.*;
@@ -668,13 +666,17 @@ public class DecLisp {
         ENV.define(sym("fukumen"), (Procedure) args -> {
             String s = args.toString().replaceAll("^\\(|\\)$", "");
             try {
-                List<Expr> result = new ArrayList<>();
-                Solver solver = FukumenParser.parse(s).solver();
-                result.add(list(Stream.of(solver.variables()).map(x -> (Expr)sym(x)).toArray(Expr[]::new)));
-                solver.solve(x -> result.add(list(IntStream.of(x).mapToObj(i -> (Expr)dec(i)).toArray(Expr[]::new))));
-                return list(result);
+                FukumenParser.parse(s).solve(false);
+                return NO_VALUE;
+                // List<Expr> result = new ArrayList<>();
+                // Solver solver = FukumenParser.parse(s).solver();
+                // result.add(list(Stream.of(solver.variables()).map(x -> (Expr)sym(x)).toArray(Expr[]::new)));
+                // solver.solve(x -> result.add(list(IntStream.of(x).mapToObj(i -> (Expr)dec(i)).toArray(Expr[]::new))));
+                // return list(result);
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | SecurityException
-                    | ClassNotFoundException | CompileError | InstantiationException | IllegalArgumentException e) {
+                    | ClassNotFoundException | CompileError
+                    // | InstantiationException
+                    | IllegalArgumentException e) {
                 throw new DecLispException(e);
             }
         },
