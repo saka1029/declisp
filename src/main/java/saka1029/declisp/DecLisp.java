@@ -682,30 +682,6 @@ public class DecLisp {
         },
         VT.procedure, "計算式", "覆面算を解く。");
     }
-    // public static Expr factor(Expr d) {
-    //     BigInteger num = bigInt(d).abs();
-    //     if (num.equals(BigInteger.ZERO))
-    //         throw new DecLispException("Cannot factor zero");
-    //     List<Expr> result = new ArrayList<>();
-    //     BigInteger max = num.sqrt();
-    //     for (BigInteger den = BigInteger.TWO; den.compareTo(max) <= 0; den = den.add(BigInteger.ONE)) {
-    //         boolean divided = false;
-    //         while (true) {
-    //             BigInteger[] r = num.divideAndRemainder(den);
-    //             // System.out.printf("%s/%s = %s...%s%n", num, den, r[0], r[1]);
-    //             if (!r[1].equals(BigInteger.ZERO))
-    //                 break;
-    //             divided = true;
-    //             num = r[0];
-    //             result.add(dec(bigDec(den)));
-    //         }
-    //         if (divided)
-    //             max = num.sqrt();
-    //     }
-    //     if (!num.equals(BigInteger.ONE))
-    //         result.add(dec(bigDec(num)));
-    //     return list(result);
-    // }
 
     static {
         ENV.define(sym("isPrime"), (Procedure) args -> {
