@@ -492,23 +492,24 @@ public class TestDeclisp {
         Env env = defaultEnv();
         eval(env, """
             (solve
-                (var x (range 0 3))
-                (var y (range 0 2))
-                (x + y == 4)
+                (variable x (range 0 3))
+                (variable y (range 0 2))
+                (constraint x + y == 4)
             )
             """);
         eval(env, """
             (solve
-                (var x (range 0 3))
-                (var y (range 0 2))
-                (x * y == 4)
+                (variable x (range 0 3))
+                (variable y (range 0 2))
+                (constraint x * y == 4)
             )
             """);
         eval(env, """
-            (solve (var a b (range 1 9))
-                (var c (range 0 9))
-                (number(a,b,c)+number(b,a,c)==number(c,a,c,a))
-                (all-different a b c)  )
+            (solve
+                (variable a b (range 1 9))
+                (variable c (range 0 9))
+                (constraint all-different a b c)  )
+                (constraint number(a,b,c)+number(b,a,c)==number(c,a,c,a))
             """);
     }
 
@@ -517,10 +518,10 @@ public class TestDeclisp {
         Env env = defaultEnv();
         eval(env, """
             (solve
-                (var s m (range 1 9))
-                (var e n d o r y (range 0 9))
-                (all-different s e n d m o r y)
-                (number(s, e, n, d) + number(m, o, r, e) == number(m, o, n, e, y))
+                (variable s m (range 1 9))
+                (variable e n d o r y (range 0 9))
+                (constraint all-different s e n d m o r y)
+                (constraint number(s, e, n, d) + number(m, o, r, e) == number(m, o, n, e, y))
             )
             """);
     }

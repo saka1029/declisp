@@ -812,23 +812,28 @@ public class DecLisp {
     static Expr solve2(Expr args, Env env) {
         Problem problem = new Problem();
         for (Expr arg : args) {
-            if (arg instanceof Cons c)
-                if (c.car().equals(sym("var"))) {
-                    Expr[] array = c.cdr().array();
-                    Set<Integer> values =  array[array.length - 1].eval(env).stream()
-                        .map(x -> toInt(dec(x)))
-                        .collect(Collectors.toSet());
-                    problem.variable(values, IntStream.range(0, array.length - 1)
-                        .mapToObj(i -> array[i].toString())
-                        .toArray(String[]::new));
-                } else if (c.car().equals(sym("all-different"))) {
-                    problem.allDifferent(c.cdr().stream()
+            if (!(arg instanceof Cons c))
+                throw new DecLispException("no verb '%s'", arg);
+            Expr verb = c.car();
+            if (verb.equals(sym("variable"))) {
+                Expr[] array = c.cdr().array();
+                Set<Integer> values =  array[array.length - 1].eval(env).stream()
+                    .map(x -> toInt(dec(x)))
+                    .collect(Collectors.toSet());
+                problem.variable(values, IntStream.range(0, array.length - 1)
+                    .mapToObj(i -> array[i].toString())
+                    .toArray(String[]::new));
+            } else if (verb.equals(sym("constraint"))) {
+                if (c.cdr() instanceof Cons cc && cc.car().equals(sym("all-different")))
+                    problem.allDifferent(cc.cdr().stream()
                         .map(Object::toString)
                         .toArray(String[]::new));
-                } else
-                    problem.constraint(str(arg));
-            else
-                problem.constraint(str(arg));
+                else
+                    problem.constraint(str(c.cdr()));
+            } else if (verb.equals(sym("code"))) {
+                problem.anyCode(str(c.cdr()));
+            } else
+                throw new DecLispException("unknown verb '%s'", verb);
         }
         try {
             problem.solve(false);
