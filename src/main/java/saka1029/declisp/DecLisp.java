@@ -666,8 +666,8 @@ public class DecLisp {
     }
 
     static {
-        ENV.define(sym("fukumen"), (Procedure) args -> {
-            String s = args.toString().replaceAll("^\\(|\\)$", "");
+        ENV.define(sym("fukumen"), (Applicable) (args, e) -> {
+            String s = args.toString().replaceFirst("^\\((.*)\\)$", "$1");
             try {
                 FukumenParser.parse(s).solve(false);
                 return NO_VALUE;
@@ -679,8 +679,8 @@ public class DecLisp {
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | SecurityException
                     | ClassNotFoundException | CompileError
                     // | InstantiationException
-                    | IllegalArgumentException e) {
-                throw new DecLispException(e);
+                    | IllegalArgumentException x) {
+                throw new DecLispException(x);
             }
         },
         VT.procedure, "計算式", "覆面算を解く。");
