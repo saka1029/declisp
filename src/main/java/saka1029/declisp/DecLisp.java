@@ -836,9 +836,11 @@ public class DecLisp {
                 throw new DecLispException("unknown verb '%s'", verb);
         }
         try {
-            problem.solve(false);
+            var solver = problem.solver();
+            solver.out(env.out);
+            solver.err(env.out);
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | SecurityException
-                | ClassNotFoundException | CompileError e) {
+                | ClassNotFoundException | CompileError | InstantiationException e) {
             throw new DecLispException(e);
         }
         return NO_VALUE;
