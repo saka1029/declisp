@@ -671,7 +671,6 @@ public class DecLisp {
             try {
                 var solver = FukumenParser.parse(s).solver();
                 solver.out(e::println);
-                solver.err(e::println);
                 solver.solve();
                 return NO_VALUE;
                 // List<Expr> result = new ArrayList<>();
@@ -841,7 +840,6 @@ public class DecLisp {
         try {
             var solver = problem.solver();
             solver.out(env::println);
-            solver.err(env::println);
             solver.solve();
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | SecurityException
                 | ClassNotFoundException | CompileError | InstantiationException e) {
