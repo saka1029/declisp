@@ -412,7 +412,7 @@ public class DecLisp {
         if (stepSign == 0)
             throw new DecLispException("step must != 0");
         List<Expr> elements = new ArrayList<>();
-        for (BigDecimal i = start; i.compareTo(end) * stepSign < 0; i = i.add(step))
+        for (BigDecimal i = start; i.compareTo(end) * stepSign <= 0; i = i.add(step))
             elements.add(dec(i));
         return list(elements);
     }
@@ -425,7 +425,8 @@ public class DecLisp {
         ENV.define(sym("range"), (Procedure) args -> {
             BigDecimal[] a = args.stream().map(x -> dec(x)).toArray(BigDecimal[]::new);
             return switch (a.length) {
-                case 1 -> range(BigDecimal.ZERO, a[0]);
+                case 1 -> range(a[0].compareTo(BigDecimal.ZERO) >= 0 ? BigDecimal.ONE
+                    : BigDecimal.ONE.negate(), a[0]);
                 case 2 -> range(a[0], a[1]);
                 case 3 -> range(a[0], a[1], a[2]);
                 default -> throw new DecLispException("Illegal range argument");
