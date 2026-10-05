@@ -669,7 +669,9 @@ public class DecLisp {
         ENV.define(sym("fukumen"), (Applicable) (args, e) -> {
             String s = args.toString().replaceFirst("^\\((.*)\\)$", "$1");
             try {
-                FukumenParser.parse(s).solve(false);
+                var solver = FukumenParser.parse(s).solver();
+                solver.out(e::println);
+                solver.err(e::println);
                 return NO_VALUE;
                 // List<Expr> result = new ArrayList<>();
                 // Solver solver = FukumenParser.parse(s).solver();
@@ -678,7 +680,7 @@ public class DecLisp {
                 // return list(result);
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | SecurityException
                     | ClassNotFoundException | CompileError
-                    // | InstantiationException
+                    | InstantiationException
                     | IllegalArgumentException x) {
                 throw new DecLispException(x);
             }
@@ -837,8 +839,9 @@ public class DecLisp {
         }
         try {
             var solver = problem.solver();
-            solver.out(env.out);
-            solver.err(env.out);
+            solver.out(env::println);
+            solver.err(env::println);
+            solver.solve();
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | SecurityException
                 | ClassNotFoundException | CompileError | InstantiationException e) {
             throw new DecLispException(e);
