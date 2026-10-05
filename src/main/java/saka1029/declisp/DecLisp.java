@@ -672,6 +672,7 @@ public class DecLisp {
                 var solver = FukumenParser.parse(s).solver();
                 solver.out(e::println);
                 solver.err(e::println);
+                solver.solve();
                 return NO_VALUE;
                 // List<Expr> result = new ArrayList<>();
                 // Solver solver = FukumenParser.parse(s).solver();
