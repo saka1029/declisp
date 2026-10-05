@@ -14,7 +14,7 @@
 (solve
     (variable s m (range 1 9))
     (variable e n d o r y (range 0 9))
-    (constraint n(s,e,n,d)+n(m,o,r,e)==n(m,o,n,e,y))
+    (constraint n(s,e,n,d) + n(m,o,r,e) == n(m,o,n,e,y))
     (constraint all-different s e n d m o r y)
     (code static int n(int... ds) {)
     (code   int r = 0;)
