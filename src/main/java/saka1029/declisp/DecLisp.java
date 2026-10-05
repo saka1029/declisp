@@ -815,9 +815,9 @@ public class DecLisp {
         Problem problem = new Problem();
         for (Expr arg : args) {
             if (!(arg instanceof Cons c))
-                throw new DecLispException("no verb '%s'", arg);
+                throw new DecLispException("verb(var|rule|code) expected but '%s'", arg);
             Expr verb = c.car();
-            if (verb.equals(sym("variable"))) {
+            if (verb.equals(sym("var"))) {
                 Expr[] array = c.cdr().array();
                 Set<Integer> values =  array[array.length - 1].eval(env).stream()
                     .map(x -> toInt(dec(x)))
@@ -825,7 +825,7 @@ public class DecLisp {
                 problem.variable(values, IntStream.range(0, array.length - 1)
                     .mapToObj(i -> array[i].toString())
                     .toArray(String[]::new));
-            } else if (verb.equals(sym("constraint"))) {
+            } else if (verb.equals(sym("rule"))) {
                 if (c.cdr() instanceof Cons cc && cc.car().equals(sym("all-different")))
                     problem.allDifferent(cc.cdr().stream()
                         .map(Object::toString)
@@ -835,7 +835,7 @@ public class DecLisp {
             } else if (verb.equals(sym("code"))) {
                 problem.anyCode(str(c.cdr()));
             } else
-                throw new DecLispException("unknown verb '%s'", verb);
+                throw new DecLispException("verb(var|rule|code) expected but '%s'", verb);
         }
         try {
             var solver = problem.solver();
