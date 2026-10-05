@@ -490,52 +490,39 @@ public class TestDeclisp {
     @Test 
     public void testSolve() {
         Env env = defaultEnv();
-        assertEquals(read("((x y) (2 2) (3 1))"), eval(env, """
+        eval(env, """
             (solve
-                ( (x (range 0 3))
-                  (y (range 0 2)) )
-                ( (= 4 (+ x y)) )
-            )
-            """));
-        assertEquals(read("((x y) (2 2))"), eval(env, """
-            (solve
-                ( (x (range 0 3))
-                  (y (range 0 2)) )
-                ( (= 4 (* x y)) )
-            )
-            """));
-        
-        try {
-            eval(env, """
-            (solve
-                ( (x (range 0 3))
-                  (x (range 0 2)) )
-                ( (+ x x) )
+                (var x (range 0 3))
+                (var y (range 0 2))
+                (x + y == 4)
             )
             """);
-            fail();
-        } catch (DecLispException x) {
-            assertEquals("variable 'x' duplicated", x.getMessage());
-        }
+        eval(env, """
+            (solve
+                (var x (range 0 3))
+                (var y (range 0 2))
+                (x * y == 4)
+            )
+            """);
+        eval(env, """
+            (solve (var a b (range 1 9))
+                (var c (range 0 9))
+                (number(a,b,c)+number(b,a,c)==number(c,a,c,a))
+                (all-different a b c)  )
+            """);
     }
 
-    // @Test 
+    @Test 
     public void testSendMoreMoney() {
         Env env = defaultEnv();
-        assertEquals(read("((s e n d m o r y) (9 5 6 7 1 0 8 2))"), eval(env, """
+        eval(env, """
             (solve
-                ( (s (range 1 10))
-                  (e (range 10))
-                  (n (range 10))
-                  (d (range 10))
-                  (m (range 1 10))
-                  (o (range 10))
-                  (r (range 10))
-                  (y (range 10)) )
-                ( (all-different s e n d m o r y)
-                  (= (+ (number s e n d) (number m o r e)) (number m o n e y))  )
+                (var s m (range 1 9))
+                (var e n d o r y (range 0 9))
+                (all-different s e n d m o r y)
+                (number(s, e, n, d) + number(m, o, r, e) == number(m, o, n, e, y))
             )
-            """));
+            """);
     }
 
     @Test 

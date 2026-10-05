@@ -17,9 +17,11 @@ import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 import java.util.function.IntConsumer;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import saka1029.csp.FukumenParser;
+import saka1029.csp.Problem;
 import saka1029.csp.JavaCompilerInMemory.CompileError;
 
 import static ch.obermuhlner.math.big.BigDecimalMath.*;
@@ -925,9 +927,43 @@ public class DecLisp {
         return solve(variables, env);
     }
 
+    static String str(Expr e) {
+        String r = e.toString().replaceFirst("^\\((.*)\\)$", "$1");
+        return r;
+    }
+    static Expr solve2(Expr args, Env env) {
+        Problem problem = new Problem();
+        for (Expr arg : args) {
+            if (arg instanceof Cons c)
+                if (c.car().equals(sym("var"))) {
+                    Expr[] array = c.cdr().array();
+                    Set<Integer> values =  array[array.length - 1].eval(env).stream()
+                        .map(x -> toInt(dec(x)))
+                        .collect(Collectors.toSet());
+                    problem.variable(values, IntStream.range(0, array.length - 1)
+                        .mapToObj(i -> array[i].toString())
+                        .toArray(String[]::new));
+                } else if (c.car().equals(sym("all-different"))) {
+                    problem.allDifferent(c.cdr().stream()
+                        .map(Object::toString)
+                        .toArray(String[]::new));
+                } else
+                    problem.constraint(str(arg));
+            else
+                problem.constraint(str(arg));
+        }
+        try {
+            problem.solve(false);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | SecurityException
+                | ClassNotFoundException | CompileError e) {
+            throw new DecLispException(e);
+        }
+        return NO_VALUE;
+    }
+
     static {
-        ENV.define(sym("solve"), (Applicable) (args, e) -> solve(args, e),
-        VT.special, "((変数1 値1)...) (制約1...)",
+        ENV.define(sym("solve"), (Applicable) (args, e) -> solve2(args, e),
+        VT.special, "(var 変数1 値1)... (制約1)...",
             "それぞれの変数に値を割り当てて全ての制約を満たすケースを見つける。");
     }
 
