@@ -5,6 +5,7 @@ import static saka1029.declisp.DecLisp.*;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
@@ -490,6 +491,8 @@ public class TestDeclisp {
     @Test 
     public void testSolve() {
         Env env = defaultEnv();
+        List<String> out = new ArrayList<>();
+        env.out(s -> out.add(s.trim()));
         eval(env, """
             (solve
                 (var x (range 0 3))
@@ -497,6 +500,8 @@ public class TestDeclisp {
                 (rule x + y == 4)
             )
             """);
+        assertEquals(List.of("x,y", "2,2", "3,1"), out);
+        out.clear();
         eval(env, """
             (solve
                 (var x (range 0 3))
@@ -504,13 +509,17 @@ public class TestDeclisp {
                 (rule x * y == 4)
             )
             """);
+        assertEquals(List.of("x,y", "2,2"), out);
+        out.clear();
         eval(env, """
             (solve
                 (var a b (range 1 9))
                 (var c (range 0 9))
-                (rule all-different a b c)  )
+                (rule all-different a b c)
                 (rule number(a,b,c)+number(b,a,c)==number(c,a,c,a))
+            )
             """);
+        assertEquals(List.of("a,b,c", "2,9,1"), out);
     }
 
     @Test 
