@@ -160,7 +160,7 @@ public class DecLisp {
             Expr first = car(args);
             Expr second = car(cdr(args));
             Expr[] list = first.array();
-            return car(cdr(args)).isList()
+            return second.isList()
                 ?  list(second.stream().map(i -> at(list,i)).toList())
                 : at(list, car(cdr(args)));
         }, VT.procedure, "リスト 位置",

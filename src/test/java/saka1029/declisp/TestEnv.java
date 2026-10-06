@@ -3,6 +3,7 @@ package saka1029.declisp;
 import static org.junit.Assert.*;
 import static saka1029.declisp.Common.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
@@ -41,5 +42,15 @@ public class TestEnv {
             new Help(VT.procedure, sym("b"), "args", "text"),
             new Help(VT.procedure, sym("z"), "args", "text")),
             env.sortedHelp());
+    }
+
+    @Test 
+    public void testPrint() {
+        Env env = new Env();
+        List<String> out = new ArrayList<>();
+        env.out(out::add);
+        env.print("output");
+        env.println("output");
+        assertEquals(List.of("output", "output" + System.lineSeparator()), out);
     }
 }

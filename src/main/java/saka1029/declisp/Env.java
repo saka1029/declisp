@@ -16,7 +16,10 @@ public class Env {
     Consumer<String> out = System.out::print;
 
     public Env() { this.prev = null; }
-    public Env(Env prev) { this.prev = prev; }
+    public Env(Env prev) {
+        this.prev = prev;
+        this.out = prev.out;
+    }
 
     public Symbol define(Symbol key, Expr value) {
         map.put(key, value);

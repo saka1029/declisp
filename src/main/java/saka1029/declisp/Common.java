@@ -87,7 +87,7 @@ public class Common {
     public static Bool bool(boolean b) { return b ? Bool.T : Bool.F; }
 
     public static Procedure procedure(Expr e) { return e.cast(Procedure.class); }
-    public static Applicable applicable(Expr e) { return e.cast(Applicable.class); }
+    // public static Applicable applicable(Expr e) { return e.cast(Applicable.class); }
 
     public static Expr read(String input) { return new Reader(input).read(); }
     public static Expr eval(Env env, String input) { return new Reader(input).read().eval(env); }

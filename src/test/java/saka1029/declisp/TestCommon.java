@@ -39,4 +39,9 @@ public class TestCommon {
         }
     }
 
+    @Test 
+    public void testNoValue() {
+        assertEquals("", NO_VALUE.toString());
+    }
+
 }

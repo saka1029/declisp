@@ -592,6 +592,12 @@ public class TestDeclisp {
     public void testFactor() {
         Env env = defaultEnv();
         assertEquals(read("(7 11 13)"), eval(env, "(factor 1001)"));
+        try {
+            eval(env, "(factor 0)");
+            fail();
+        } catch (DecLispException x) {
+            assertEquals("Cannot factor zero", x.getMessage());
+        }
     }
 
     @Test 
@@ -734,6 +740,35 @@ public class TestDeclisp {
             listArgsList(read("((1 2) 3)"));
         } catch (DecLispException x) {
             assertEquals("'3' is not a list", x.getMessage());
+        }
+    }
+
+    @Test 
+    public void testFukumen() {
+        Env env = defaultEnv();
+        List<String> out = new ArrayList<>();
+        env.out(s -> out.add(s));
+        eval(env, "(fukumen abc+bac=caca)");
+        String nl = System.lineSeparator();
+        assertEquals(List.of("a,b,c" + nl, "2,9,1" + nl), out);
+    }
+
+    @Test 
+    public void testAt() {
+        Env env = defaultEnv();
+        assertEquals(dec(1), eval(env, "(at '(0 1 2) 1)"));
+        assertEquals(list(dec(1), dec(2)), eval(env, "(at '(0 1 2) '(1 2))"));
+        try {
+            eval(env, "(at '(0 1 2) -1)");
+            fail();
+        } catch (DecLispException x) {
+            assertEquals("index '-1' out of bounds", x.getMessage());
+        }
+        try {
+            eval(env, "(at '(0 1 2) 3)");
+            fail();
+        } catch (DecLispException x) {
+            assertEquals("index '3' out of bounds", x.getMessage());
         }
     }
 }
