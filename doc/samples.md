@@ -10,6 +10,10 @@
     (rule all-different s e n d m o r y)
 )
 ```
+
+任意のJavaコードを記述する例。
+ruleとcode内はJavaの文法で記述する点に注意する。
+
 ```
 (solve
     (var s m (range 1 9))
