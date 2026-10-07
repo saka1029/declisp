@@ -554,6 +554,7 @@ public class TestDeclisp {
                 (solve
                     (var a b c (range 9))
                     (rule (= (+ (num a b c) (num b a c)) (num c a c a)))
+                    (rule all-different a b c)
                     (code (num . x) (apply number x))
                 )
                 """));
