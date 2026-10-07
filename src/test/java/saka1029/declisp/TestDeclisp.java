@@ -489,7 +489,7 @@ public class TestDeclisp {
     }
 
     @Test 
-    public void testSolve() {
+    public void testSolveJava() {
         Env env = defaultEnv();
         List<String> out = new ArrayList<>();
         env.out(s -> out.add(s.trim()));
@@ -520,6 +520,21 @@ public class TestDeclisp {
             )
             """);
         assertEquals(List.of("a,b,c", "2,9,1"), out);
+    }
+
+    @Test 
+    public void testSolve() {
+        Env env = defaultEnv();
+        List<String> out = new ArrayList<>();
+        env.out(s -> out.add(s.trim()));
+        Expr result = eval(env, """
+            (solve
+                (var x (range 0 3))
+                (var y (range 0 2))
+                (rule (== 4 (+ x y)))
+            )
+            """);
+        assertEquals(read("((x y) (2 2) (3 1))"), result);
     }
 
     @Test 

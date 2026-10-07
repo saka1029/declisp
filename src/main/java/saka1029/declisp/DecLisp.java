@@ -969,7 +969,9 @@ public class DecLisp {
         }
         for (Expr line : args) {
             Expr verb = car(line);
-            if (verb.equals(sym("rule")))
+            if (verb.equals(sym("var")))
+                continue;
+            else if (verb.equals(sym("rule")))
                 parseRule(cdr(line), constraints, symbols);
             else if (verb.equals(sym("code")))
                 parseCode(cdr(line), nenv);
