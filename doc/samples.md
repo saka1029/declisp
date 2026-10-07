@@ -1,7 +1,10 @@
 # samples
 
-## send more money (solve)
+## send more money
 
+### solve-java
+
+Javaコンパイラを使用したsolver
 制約(rule)はJavaの文法で記述する点に注意する。
 
 ```
@@ -31,7 +34,26 @@ code内はJavaの文法で記述する点に注意する。
 )
 ```
 
-## send more money (fukumen)
+## solve
+
+Javaコンパイラを使用しないsolverで、
+制約式(rule)は参照コード(code)にはdeclispの式が記述できる。
+ただし遅い。
+
+```
+(solve
+    (var s m (range 9))
+    (var e n d o r y (range 0 9))
+    (rule all-different s e n d m o r y)
+    (rule (= (+ (num s e n d) (num m o r e)) (num m o n e y)))
+    (code (num . x) (apply number x))
+)
+```
+
+
+### fukumen
+
+fukumenは覆面算に特化したsolverで、Javaコンパイラを使用している。
 
 ```
 (fukumen send + more = money)
