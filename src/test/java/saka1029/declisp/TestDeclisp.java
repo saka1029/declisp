@@ -525,16 +525,39 @@ public class TestDeclisp {
     @Test 
     public void testSolve() {
         Env env = defaultEnv();
-        List<String> out = new ArrayList<>();
-        env.out(s -> out.add(s.trim()));
-        Expr result = eval(env, """
-            (solve
-                (var x (range 0 3))
-                (var y (range 0 2))
-                (rule (== 4 (+ x y)))
-            )
-            """);
-        assertEquals(read("((x y) (2 2) (3 1))"), result);
+        assertEquals(read("((x y) (2 2) (3 1))"),
+            eval(env, """
+                (solve
+                    (var x (range 3))
+                    (var y (range 2))
+                    (rule (== 4 (+ x y)))
+                )
+                """));
+        assertFalse(env.map.containsKey(sym("x")));
+        assertEquals(read("((x y) (1 1) (1 2) (2 1) (3 2))"),
+            eval(env, """
+                (solve
+                    (var x (range 3))
+                    (var y (range 2))
+                    (rule (isPrime (+ x y)))
+                )
+                """));
+        assertEquals(read("((a b c) (2 9 1))"),
+            eval(env, """
+                (solve
+                    (var a b c (range 9))
+                    (rule (= (+ (number a b c) (number b a c)) (number c a c a)))
+                )
+                """));
+        assertEquals(read("((a b c) (2 9 1))"),
+            eval(env, """
+                (solve
+                    (var a b c (range 9))
+                    (rule (= (+ (num a b c) (num b a c)) (num c a c a)))
+                    (code (num . x) (apply number x))
+                )
+                """));
+        assertFalse(env.map.containsKey(sym("num")));
     }
 
     @Test 
