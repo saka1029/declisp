@@ -494,7 +494,7 @@ public class TestDeclisp {
         List<String> out = new ArrayList<>();
         env.out(s -> out.add(s.trim()));
         eval(env, """
-            (solve
+            (solve-java
                 (var x (range 0 3))
                 (var y (range 0 2))
                 (rule x + y == 4)
@@ -503,7 +503,7 @@ public class TestDeclisp {
         assertEquals(List.of("x,y", "2,2", "3,1"), out);
         out.clear();
         eval(env, """
-            (solve
+            (solve-java
                 (var x (range 0 3))
                 (var y (range 0 2))
                 (rule x * y == 4)
@@ -512,7 +512,7 @@ public class TestDeclisp {
         assertEquals(List.of("x,y", "2,2"), out);
         out.clear();
         eval(env, """
-            (solve
+            (solve-java
                 (var a b (range 1 9))
                 (var c (range 0 9))
                 (rule all-different a b c)
@@ -526,7 +526,7 @@ public class TestDeclisp {
     public void testSendMoreMoney() {
         Env env = defaultEnv();
         eval(env, """
-            (solve
+            (solve-java
                 (var s m (range 1 9))
                 (var e n d o r y (range 0 9))
                 (rule all-different s e n d m o r y)

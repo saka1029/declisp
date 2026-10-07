@@ -795,6 +795,197 @@ public class DecLisp {
 
     }
 
+
+    record Constraint(Expr constraint, Set<Symbol> variables) {
+        public Constraint(Expr constraint) {
+            this(constraint, new HashSet<>());
+        }
+    }
+    record Variable(Symbol variable, Set<Expr> values, List<Expr> constrains) {
+        public Variable(Symbol variable, Set<Expr> value) {
+            this(variable, value, new ArrayList<>());
+        }
+    }
+
+    static void parseVar(Expr line, List<Variable> variables, Set<Symbol> symbols, Env nenv) {
+        Expr[] array = line.array();
+        int length = array.length;
+        Set<Expr> values = array[length - 1].eval(nenv).stream()
+            .collect(Collectors.toSet());
+        for (int i = 0; i < length - 1; ++i) {
+            Symbol var = symbol(array[i]);
+            if (!symbols.add(var))
+                throw new DecLispException("variable '%s' duplicated", var);
+            Variable variable = new Variable(var, values);
+            variables.add(variable);
+        }
+    }
+
+    // static void parseVariables(Expr vlines, List<Variable> variables, Set<Symbol> symbols, Env env) {
+    //     for (Expr v : vlines) {
+    //         Symbol s = symbol(car(v));
+    //         if (!symbols.add(s))
+    //             throw new DecLispException("variable '%s' duplicated", s);
+    //         Variable variable = new Variable(s);
+    //         variables.add(variable);
+    //         for (Expr val : car(cdr(v)).eval(env))
+    //             variable.values.add(val);
+    //     }
+    // }
+
+    static void parseRuleAllDifferent(Expr cline, List<Constraint> constraints, Set<Symbol> symbols) {
+        Expr[] vars = cline.array();
+        int length = vars.length;
+        for (Expr v : vars) // all-differentの対象変数がすべて変数として定義されていることを確認する
+            if (!symbols.contains(v))
+                throw new DecLispException("undefined variable '%s'", v);
+        for (int i = 0; i < length; ++i) {
+            for (int j = i + 1; j < length; ++j) {
+                Constraint diff = new Constraint(list(sym("!="), vars[i], vars[j]));
+                constraints.add(diff);
+                diff.variables.add(symbol(vars[i]));
+                diff.variables.add(symbol(vars[j]));
+            }
+        }
+    }
+    // static void parseAllDifferent(Expr cline, List<Constraint> constraints, Set<Symbol> symbols) {
+    //     Expr[] vars = cdr(cline).stream().toArray(Expr[]::new);
+    //     for (Expr v : vars) // all-differentの対象変数がすべて変数として定義されていることを確認する
+    //         if (!symbols.contains(v))
+    //             throw new DecLispException("undefined variable '%s'", v);
+    //     for (int i = 0, size = vars.length; i < size; ++i) {
+    //         for (int j = i + 1; j < size; ++j) {
+    //             Constraint diff = new Constraint(list(sym("!="), vars[i], vars[j]));
+    //             constraints.add(diff);
+    //             diff.variables.add(symbol(vars[i]));
+    //             diff.variables.add(symbol(vars[j]));
+    //         }
+    //     }
+    // }
+
+    static void parseRuleOther(Expr cline, List<Constraint> constraints, Set<Symbol> symbols) {
+        Constraint constraint = new Constraint(cline);
+        constraints.add(constraint);
+        new Object() {
+            void variable(Expr e) {
+                if (e instanceof Symbol s) {
+                    if (symbols.contains(s))
+                        constraint.variables.add(s);
+                } else if (e instanceof Cons c) {
+                    variable(c.car());
+                    variable(c.cdr());
+                }
+            }
+        }.variable(cline);
+    }
+
+    // static void parseOtherConstraint(Expr cline, List<Constraint> constraints, Set<Symbol> symbols) {
+    //     Constraint constraint = new Constraint(cline);
+    //     constraints.add(constraint);
+    //     new Object() {
+    //         void variable(Expr e) {
+    //             if (e instanceof Symbol s) {
+    //                 if (symbols.contains(s))
+    //                     constraint.variables.add(s);
+    //             } else if (e instanceof Cons c) {
+    //                 variable(c.car());
+    //                 variable(c.cdr());
+    //             }
+    //         }
+    //     }.variable(cline);
+    // }
+
+    static void parseRule(Expr cline, List<Constraint> constraints, Set<Symbol> symbols) {
+        if (!(cline instanceof Cons c))
+            throw new DecLispException("invalid rule '%s'", cline);
+        if (c.car().equals(sym("all-different")))
+            parseRuleAllDifferent(c.cdr(), constraints, symbols);
+        else
+            parseRuleOther(c.cdr(), constraints, symbols);
+    }
+
+    static void parseCode(Expr cline, Env nenv) {
+        cons(sym("define"), cline).eval(nenv);
+    }
+
+    static void bindConstaints(List<Variable> variables, List<Constraint> constraints) {
+        Set<Symbol> bind = new HashSet<>();
+        for (Variable variable : variables) {
+            bind.add(variable.variable);
+            for (Iterator<Constraint> it = constraints.iterator(); it.hasNext(); ) {
+                Constraint c = it.next();
+                if (c.variables.stream().allMatch(bind::contains)) {
+                    variable.constrains.add(c.constraint);
+                    it.remove();
+                }
+            }
+        }
+        if (!constraints.isEmpty())
+            throw new DecLispException("illegal constraints");
+    }
+
+    // static int bindCount = 0;
+    static Expr solve(List<Variable> variables, Env nenv) {
+        // bindCount = 0;
+        List<Expr[]> result = new ArrayList<>();
+        result.add(variables.stream().map(x -> x.variable).toArray(Expr[]::new));
+        new Object() {
+            // Env nenv = new Env(env);    // 試行錯誤用のEnv
+            void solve(int index) {
+                // System.out.printf("index=%d nenv=%s%n", index, nenv);
+                if (index >= variables.size()) {
+                    result.add(variables.stream()
+                        .map(x -> nenv.get(x.variable))
+                        .toArray(Expr[]::new));
+                } else {
+                    Variable v = variables.get(index);
+                    L: for (Expr e : v.values) {
+                        nenv.define(v.variable, e);
+                        // ++bindCount;
+                        for (Expr c : v.constrains)
+                            if (!bool(c.eval(nenv)))
+                                continue L;
+                        solve(index + 1);
+                    }
+                }
+            }
+        }.solve(0);
+        // System.out.printf("bindCount=%d%n", bindCount);
+        return list(result.stream()
+            .map(a -> list(a))
+            .toArray(Expr[]::new));
+    }
+
+    static Expr solve(Expr args, Env env) {
+        Env nenv = new Env(env);
+        List<Variable> variables = new ArrayList<>();
+        Set<Symbol> symbols = new HashSet<>();
+        List<Constraint> constraints = new ArrayList<>();
+        for (Expr line : args) {
+            if (!(line instanceof Cons c))
+                throw new DecLispException("unknown line '%s'", line);
+            if (c.car().equals(sym("var")))
+                parseVar(cdr(line), variables, symbols, nenv);
+        }
+        for (Expr line : args) {
+            Expr verb = car(line);
+            if (verb.equals(sym("rule")))
+                parseRule(cdr(line), constraints, symbols);
+            else if (verb.equals(sym("code")))
+                parseCode(cdr(line), nenv);
+            else
+                throw new DecLispException("unknown verb '%s'", verb);
+        }
+        bindConstaints(variables, constraints);
+        return solve(variables, nenv);
+    }
+
+    static {
+        ENV.define(sym("solve"), (Applicable) (args, e) -> solve(args, e),
+        VT.special, "(var 変数名 値域)... (rule 制約)... (code 関数定義)...",
+        "各変数をそれぞれの値域に割当て、すべての制約を満たす値を見つける。");
+    }
+
     static {
         ENV.define(sym("number"), (Procedure) args -> {
             BigDecimal r = BigDecimal.ZERO;
@@ -811,7 +1002,7 @@ public class DecLisp {
         String r = e.toString().replaceFirst("^\\((.*)\\)$", "$1");
         return r;
     }
-    static Expr solve2(Expr args, Env env) {
+    static Expr solveJava(Expr args, Env env) {
         Problem problem = new Problem();
         for (Expr arg : args) {
             if (!(arg instanceof Cons c))
@@ -849,7 +1040,7 @@ public class DecLisp {
     }
 
     static {
-        ENV.define(sym("solve"), (Applicable) (args, e) -> solve2(args, e),
+        ENV.define(sym("solve-java"), (Applicable) (args, e) -> solveJava(args, e),
         VT.special, "(var 変数1 値1)... (制約1)...",
             "それぞれの変数に値を割り当てて全ての制約を満たすケースを見つける。");
     }
