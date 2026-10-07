@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -795,7 +796,6 @@ public class DecLisp {
 
     }
 
-
     record Constraint(Expr constraint, Set<Symbol> variables) {
         public Constraint(Expr constraint) {
             this(constraint, new HashSet<>());
@@ -811,7 +811,7 @@ public class DecLisp {
         Expr[] array = line.array();
         int length = array.length;
         Set<Expr> values = array[length - 1].eval(nenv).stream()
-            .collect(Collectors.toSet());
+            .collect(Collectors.toCollection(LinkedHashSet::new));
         for (int i = 0; i < length - 1; ++i) {
             Symbol var = symbol(array[i]);
             if (!symbols.add(var))
@@ -820,18 +820,6 @@ public class DecLisp {
             variables.add(variable);
         }
     }
-
-    // static void parseVariables(Expr vlines, List<Variable> variables, Set<Symbol> symbols, Env env) {
-    //     for (Expr v : vlines) {
-    //         Symbol s = symbol(car(v));
-    //         if (!symbols.add(s))
-    //             throw new DecLispException("variable '%s' duplicated", s);
-    //         Variable variable = new Variable(s);
-    //         variables.add(variable);
-    //         for (Expr val : car(cdr(v)).eval(env))
-    //             variable.values.add(val);
-    //     }
-    // }
 
     static void parseRuleAllDifferent(Expr cline, List<Constraint> constraints, Set<Symbol> symbols) {
         Expr[] vars = cline.array();
@@ -848,20 +836,6 @@ public class DecLisp {
             }
         }
     }
-    // static void parseAllDifferent(Expr cline, List<Constraint> constraints, Set<Symbol> symbols) {
-    //     Expr[] vars = cdr(cline).stream().toArray(Expr[]::new);
-    //     for (Expr v : vars) // all-differentの対象変数がすべて変数として定義されていることを確認する
-    //         if (!symbols.contains(v))
-    //             throw new DecLispException("undefined variable '%s'", v);
-    //     for (int i = 0, size = vars.length; i < size; ++i) {
-    //         for (int j = i + 1; j < size; ++j) {
-    //             Constraint diff = new Constraint(list(sym("!="), vars[i], vars[j]));
-    //             constraints.add(diff);
-    //             diff.variables.add(symbol(vars[i]));
-    //             diff.variables.add(symbol(vars[j]));
-    //         }
-    //     }
-    // }
 
     static void parseRuleOther(Expr cline, List<Constraint> constraints, Set<Symbol> symbols) {
         Constraint constraint = new Constraint(cline);
@@ -879,29 +853,13 @@ public class DecLisp {
         }.variable(cline);
     }
 
-    // static void parseOtherConstraint(Expr cline, List<Constraint> constraints, Set<Symbol> symbols) {
-    //     Constraint constraint = new Constraint(cline);
-    //     constraints.add(constraint);
-    //     new Object() {
-    //         void variable(Expr e) {
-    //             if (e instanceof Symbol s) {
-    //                 if (symbols.contains(s))
-    //                     constraint.variables.add(s);
-    //             } else if (e instanceof Cons c) {
-    //                 variable(c.car());
-    //                 variable(c.cdr());
-    //             }
-    //         }
-    //     }.variable(cline);
-    // }
-
     static void parseRule(Expr cline, List<Constraint> constraints, Set<Symbol> symbols) {
         if (!(cline instanceof Cons c))
             throw new DecLispException("invalid rule '%s'", cline);
         if (c.car().equals(sym("all-different")))
             parseRuleAllDifferent(c.cdr(), constraints, symbols);
         else
-            parseRuleOther(c.cdr(), constraints, symbols);
+            parseRuleOther(c.car(), constraints, symbols);
     }
 
     static void parseCode(Expr cline, Env nenv) {
@@ -930,7 +888,6 @@ public class DecLisp {
         List<Expr[]> result = new ArrayList<>();
         result.add(variables.stream().map(x -> x.variable).toArray(Expr[]::new));
         new Object() {
-            // Env nenv = new Env(env);    // 試行錯誤用のEnv
             void solve(int index) {
                 // System.out.printf("index=%d nenv=%s%n", index, nenv);
                 if (index >= variables.size()) {
