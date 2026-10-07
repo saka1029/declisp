@@ -314,6 +314,13 @@ public class TestDeclisp {
     }
 
     @Test 
+    public void testFilter() {
+        Env env = defaultEnv();
+        assertEquals(read("(1 3 5)"), eval(env, "(filter odd (range 6))"));
+        assertEquals(read("(2 4 6)"), eval(env, "(filter even (range 6))"));
+    }
+
+    @Test 
     public void testMapEmpty() {
         Env env = defaultEnv();
         assertEquals(read("()"), eval(env, "(map - )"));
@@ -372,7 +379,6 @@ public class TestDeclisp {
 
     @Test 
     public void testTriangle() {
-        
         Env env = defaultEnv();
         eval(env, "(define d30 (/ (pi) 6))");
         eval(env, "(define d45 (/ (pi) 4))");
@@ -388,6 +394,15 @@ public class TestDeclisp {
         assertTrue(bool(eval(env, "(approx (asin -1) (- d90))")));
         assertTrue(bool(eval(env, "(~ (acos 0) d90)")));
         assertTrue(bool(eval(env, "(~ (atan 1) d45)")));
+    }
+
+    @Test 
+    public void testEvenOdd() {
+        Env env = defaultEnv();
+        assertEquals(Bool.T, eval(env, "(even 0)"));
+        assertEquals(Bool.F, eval(env, "(even 1)"));
+        assertEquals(Bool.F, eval(env, "(odd 0)"));
+        assertEquals(Bool.T, eval(env, "(odd 1)"));
     }
 
     @Test 

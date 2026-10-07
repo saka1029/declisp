@@ -324,6 +324,10 @@ public class DecLisp {
         VT.procedure, "数1 数2", "数1と数2がほぼ等値である。(差の絶対値がDELTA未満である)");
         ENV.define(sym("~"), ENV.get(sym("approx")),
         VT.procedure, "数1 数2", "数1と数2がほぼ等値である。(差の絶対値がDELTA未満である)");
+        ENV.define(sym("even"), (Procedure) args ->
+            bool(bigInt(car(args)).and(BigInteger.ONE).equals(BigInteger.ZERO)));
+        ENV.define(sym("odd"), (Procedure) args ->
+            bool(bigInt(car(args)).and(BigInteger.ONE).equals(BigInteger.ONE)));
     }
 
     /**
@@ -378,6 +382,24 @@ public class DecLisp {
                 throw new DecLispException("illegal function");
         },
         VT.procedure, "関数 リスト...", "関数をリストの要素に順次適用し、その結果をリストにして返す。");
+    }
+
+    static Expr filter(Expr args) {
+        Expr[] a = args.array();
+        if (a.length != 2)
+            throw new DecLispException("illegal args '%s'", args);
+        Procedure predicate = procedure(a[0]);
+        Expr list = a[1];
+        List<Expr> result = new ArrayList<>();
+        for (Expr e : list)
+            if (bool(predicate.apply(list(e))))
+                result.add(e);
+        return list(result);
+    }
+
+    static {
+        ENV.define(sym("filter"), (Procedure) args -> filter(args),
+        VT.procedure, "PREDICATE LIST", "LISTからPREDICATEを満たす要素を抽出する");
     }
 
     static {
