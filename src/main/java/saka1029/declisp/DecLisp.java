@@ -63,15 +63,9 @@ public class DecLisp {
     static {
         ENV.define(QUOTE, (Applicable) (args, e) -> car(args),
             VT.special, "値", "値を評価せずに返す。");
-        ENV.define(LAMBDA, (Applicable) (args, e) -> {
-            // Expr parms = car(args), body = cdr(args);
-            return new Closure(car(args), cdr(args), e);
-            // return (Procedure) a -> {
-            //     Env newEnv = new Env(e);
-            //     parms.pairlis(a, newEnv);
-            //     return progn(body, newEnv);
-            // };
-        }, VT.special, "(var...) body...", "varを引数としてbodyを実行する関数を定義する。");
+        ENV.define(LAMBDA, (Applicable) (args, e) ->
+            new Closure(car(args), cdr(args), e),
+            VT.special, "(var...) body...", "varを引数としてbodyを実行する関数を定義する。");
         ENV.define(sym("if"), (Applicable) (args, e) -> {
             boolean p = bool(car(args).eval(e));
             if (p)
