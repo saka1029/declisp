@@ -73,7 +73,7 @@ public class TestDeclisp {
         assertEquals(dec(1), eval(env, "(fact 1)"));
         assertEquals(dec(2), eval(env, "(fact 2)"));
         assertEquals(dec(6), eval(env, "(fact 3)"));
-        assertEquals(sym("fact2"), eval(env, "(define fact2 (lambda (n) (if (<= n 0) 1 (* n (fact (- n 1))))))"));
+        assertEquals(sym("fact2"), eval(env, "(define fact2 (lambda (n) (if (<= n 0) 1 (* n (fact2 (- n 1))))))"));
         assertEquals(dec(1), eval(env, "(fact2 0)"));
         assertEquals(dec(1), eval(env, "(fact2 1)"));
         assertEquals(dec(2), eval(env, "(fact2 2)"));

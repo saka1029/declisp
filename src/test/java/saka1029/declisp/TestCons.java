@@ -36,7 +36,7 @@ public class TestCons {
             eval(env, "(car (a 1))");
             fail();
         } catch (DecLispException x) {
-            assertEquals("Cons.eval(): Cannot apply '()' to '(1)'", x.getMessage());
+            assertEquals("cannot apply '()' to '(1)'", x.getMessage());
         }
 
     }

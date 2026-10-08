@@ -64,12 +64,13 @@ public class DecLisp {
         ENV.define(QUOTE, (Applicable) (args, e) -> car(args),
             VT.special, "値", "値を評価せずに返す。");
         ENV.define(LAMBDA, (Applicable) (args, e) -> {
-            Expr parms = car(args), body = cdr(args);
-            return (Procedure) a -> {
-                Env newEnv = new Env(e);
-                parms.pairlis(a, newEnv);
-                return progn(body, newEnv);
-            };
+            // Expr parms = car(args), body = cdr(args);
+            return new Closure(car(args), cdr(args), e);
+            // return (Procedure) a -> {
+            //     Env newEnv = new Env(e);
+            //     parms.pairlis(a, newEnv);
+            //     return progn(body, newEnv);
+            // };
         }, VT.special, "(var...) body...", "varを引数としてbodyを実行する関数を定義する。");
         ENV.define(sym("if"), (Applicable) (args, e) -> {
             boolean p = bool(car(args).eval(e));
@@ -81,12 +82,15 @@ public class DecLisp {
                 return Nil.NIL;
         }, VT.special, "then [else]", "条件が真ならthenを評価し、そうでなければelseを評価する。");
         ENV.define(sym("define"), (Applicable) (args, e) -> {
+            Closure closure = null;
             return car(args) instanceof Cons head
-                ? e.define(symbol(head.car()), cons(LAMBDA, cons(head.cdr(), cdr(args))).eval(e),
-                    VT.procedure, unlist(head.cdr()), "ユーザ定義関数")
+                ? e.define(symbol(head.car()), closure = (Closure)cons(LAMBDA, cons(head.cdr(), cdr(args))).eval(e),
+                    VT.procedure, closure.parms().toString(), closure.toString())
                 : car(cdr(args)) instanceof Cons && car(car(cdr(args))).equals(LAMBDA)
-                    ? e.define(symbol(car(args)), car(cdr(args)).eval(e), VT.procedure, unlist(car(cdr(car(cdr(args))))), "ユーザ定義関数")
-                    : e.define(symbol(car(args)), car(cdr(args)).eval(e), VT.variable, "", "");
+                    ? e.define(symbol(car(args)), closure = (Closure)car(cdr(args)).eval(e),
+                        VT.procedure, closure.parms().toString(), closure.toString())
+                    : e.define(symbol(car(args)), car(cdr(args)).eval(e),
+                        VT.variable, "", "");
         }, VT.special, "グローバル変数名 値", "グローバル変数を定義する。");
         ENV.define(sym("help"), (Applicable) (args, e) -> {
             String key = args instanceof Cons c ? sym(car(c)).toLowerCase() : "";

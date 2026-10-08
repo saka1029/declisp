@@ -21,12 +21,8 @@ public record Cons(Expr car, Expr cdr) implements Expr {
         Expr head = car.eval(env);
         if (head instanceof Applicable app)
             return app.apply(cdr, env);
-        // else if (head instanceof Dec)   // リストの先頭が数字ならevlisする
-        //     return new Cons(head, cdr.evlis(env));
-        // else if (head instanceof Bool)   // リストの先頭が真偽値ならevlisする
-        //     return new Cons(head, cdr.evlis(env));
         else
-            throw new DecLispException("Cons.eval(): Cannot apply '%s' to '%s'", head, cdr);
+            throw new DecLispException("cannot apply '%s' to '%s'", head, cdr);
     }
 
     @Override

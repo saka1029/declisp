@@ -91,4 +91,11 @@ public class Common {
 
     public static Expr read(String input) { return new Reader(input).read(); }
     public static Expr eval(Env env, String input) { return new Reader(input).read().eval(env); }
+
+    public static Expr progn(Expr body, Env env) {
+        Expr r = Nil.NIL;
+        for (Expr c : body)
+            r = c.eval(env);
+        return r;
+    }
 }
