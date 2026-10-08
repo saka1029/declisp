@@ -384,22 +384,28 @@ public class DecLisp {
         VT.procedure, "関数 リスト...", "関数をリストの要素に順次適用し、その結果をリストにして返す。");
     }
 
-    static Expr filter(Expr args) {
-        Expr[] a = args.array();
-        if (a.length != 2)
-            throw new DecLispException("illegal args '%s'", args);
-        Procedure predicate = procedure(a[0]);
-        Expr list = a[1];
-        List<Expr> result = new ArrayList<>();
-        for (Expr e : list)
-            if (bool(predicate.apply(list(e))))
-                result.add(e);
-        return list(result);
-    }
-
     static {
-        ENV.define(sym("filter"), (Procedure) args -> filter(args),
-        VT.procedure, "PREDICATE LIST", "LISTからPREDICATEを満たす要素を抽出する");
+        ENV.define(sym("filter"), (Procedure) args -> {
+            Expr[] a = args.array();
+            if (a.length != 2)
+                throw new DecLispException("illegal args '%s'", args);
+            Procedure predicate = procedure(a[0]);
+            List<Expr> result = new ArrayList<>();
+            for (Expr e : a[1])
+                if (bool(predicate.apply(list(e))))
+                    result.add(e);
+            return list(result);
+        }, VT.procedure, "PREDICATE LIST", "LISTからPREDICATEを満たす要素を抽出する。");
+        ENV.define(sym("reduce"), (Procedure) args -> {
+            Expr[] a = args.array();
+            if (a.length != 3)
+                throw new DecLispException("illegal args '%s'", args);
+            Expr result = a[0];
+            Procedure func = procedure(a[1]);
+            for (Expr e : a[2])
+                result = func.apply(list(result, e));
+            return result;
+        }, VT.procedure, "UNIT FUNCTION LIST", "LISTをFUNCTIONで簡約する。");
     }
 
     static {

@@ -321,6 +321,14 @@ public class TestDeclisp {
     }
 
     @Test 
+    public void testReduce() {
+        Env env = defaultEnv();
+        assertEquals(dec(15), eval(env, "(reduce 0 + (range 5))"));
+        assertEquals(dec(0), eval(env, "(reduce 0 + ())"));
+        assertEquals(dec(3), eval(env, "(reduce 3 + ())"));
+    }
+
+    @Test 
     public void testMapEmpty() {
         Env env = defaultEnv();
         assertEquals(read("()"), eval(env, "(map - )"));
