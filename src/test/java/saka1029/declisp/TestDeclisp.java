@@ -288,6 +288,8 @@ public class TestDeclisp {
     public void testMap() {
         Env env = defaultEnv();
         assertEquals(read("-1"), eval(env, "(- 1)"));
+        assertEquals(read("()"), eval(env, "(map - '())"));
+        assertEquals(read("()"), eval(env, "(map - )"));
         assertEquals(read("(-1 -2)"), eval(env, "(map - '(1 2))"));
         assertEquals(read("(-1 -2)"), eval(env, "(map - '(1 2))"));
         assertEquals(read("(2 4)"), eval(env, "(map (lambda (x) (+ x x)) '(1 2))"));
@@ -316,6 +318,7 @@ public class TestDeclisp {
     @Test 
     public void testFilter() {
         Env env = defaultEnv();
+        assertEquals(read("()"), eval(env, "(filter odd '())"));
         assertEquals(read("(1 3 5)"), eval(env, "(filter odd (range 6))"));
         assertEquals(read("(2 4 6)"), eval(env, "(filter even (range 6))"));
     }
@@ -326,12 +329,6 @@ public class TestDeclisp {
         assertEquals(dec(15), eval(env, "(reduce 0 + (range 5))"));
         assertEquals(dec(0), eval(env, "(reduce 0 + ())"));
         assertEquals(dec(3), eval(env, "(reduce 3 + ())"));
-    }
-
-    @Test 
-    public void testMapEmpty() {
-        Env env = defaultEnv();
-        assertEquals(read("()"), eval(env, "(map - )"));
     }
 
     @Test 
@@ -660,6 +657,77 @@ public class TestDeclisp {
         } catch (DecLispException x) {
             assertEquals("Cannot factor zero", x.getMessage());
         }
+    }
+
+    @Test 
+    public void testDivisor() {
+        Env env = defaultEnv();
+        assertEquals(read("(1)"), eval(env, "(divisor 1)"));
+        assertEquals(read("(1 3)"), eval(env, "(divisor 3)"));
+        assertEquals(read("(1 2 3 6)"), eval(env, "(divisor 6)"));
+    }
+
+    @Test 
+    public void testP() {
+        Env env = defaultEnv();
+        assertEquals(read("1"), eval(env, "(P 1 1)"));
+        assertEquals(read("2"), eval(env, "(P 2 1)"));
+        assertEquals(read("2"), eval(env, "(P 2 2)"));
+        assertEquals(read("3"), eval(env, "(P 3 1)"));
+        assertEquals(read("6"), eval(env, "(P 3 2)"));
+        assertEquals(read("6"), eval(env, "(P 3 3)"));
+    }
+
+    @Test 
+    public void testPermutation() {
+        Env env = defaultEnv();
+        env.define(sym("*LIST*"), Nil.NIL);
+        eval(env, "(permutation 1 1 (lambda (x) (set *LIST* (cons x *LIST*))))");
+        assertEquals(read("((0))"), eval(env, "(reverse *LIST*)"));
+        env.define(sym("*LIST*"), Nil.NIL);
+        eval(env, "(permutation 2 1 (lambda (x) (set *LIST* (cons x *LIST*))))");
+        assertEquals(read("((0) (1))"), eval(env, "(reverse *LIST*)"));
+        env.define(sym("*LIST*"), Nil.NIL);
+        eval(env, "(permutation 2 2 (lambda (x) (set *LIST* (cons x *LIST*))))");
+        assertEquals(read("((0 1) (1 0))"), eval(env, "(reverse *LIST*)"));
+        env.define(sym("*LIST*"), Nil.NIL);
+        eval(env, "(permutation 3 1 (lambda (x) (set *LIST* (cons x *LIST*))))");
+        assertEquals(read("((0) (1) (2))"), eval(env, "(reverse *LIST*)"));
+        env.define(sym("*LIST*"), Nil.NIL);
+        eval(env, "(permutation 3 2 (lambda (x) (set *LIST* (cons x *LIST*))))");
+        assertEquals(read("((0 1) (0 2) (1 0) (1 2) (2 0) (2 1))"), eval(env, "(reverse *LIST*)"));
+    }
+
+    @Test 
+    public void testCombination() {
+        Env env = defaultEnv();
+        env.define(sym("*LIST*"), Nil.NIL);
+        eval(env, "(combination 1 1 (lambda (x) (set *LIST* (cons x *LIST*))))");
+        assertEquals(read("((0))"), eval(env, "(reverse *LIST*)"));
+        env.define(sym("*LIST*"), Nil.NIL);
+        eval(env, "(combination 2 1 (lambda (x) (set *LIST* (cons x *LIST*))))");
+        assertEquals(read("((0) (1))"), eval(env, "(reverse *LIST*)"));
+        env.define(sym("*LIST*"), Nil.NIL);
+        eval(env, "(combination 2 2 (lambda (x) (set *LIST* (cons x *LIST*))))");
+        assertEquals(read("((0 1))"), eval(env, "(reverse *LIST*)"));
+        env.define(sym("*LIST*"), Nil.NIL);
+        eval(env, "(combination 3 1 (lambda (x) (set *LIST* (cons x *LIST*))))");
+        assertEquals(read("((0) (1) (2))"), eval(env, "(reverse *LIST*)"));
+        env.define(sym("*LIST*"), Nil.NIL);
+        eval(env, "(combination 3 2 (lambda (x) (set *LIST* (cons x *LIST*))))");
+        assertEquals(read("((0 1) (0 2) (1 2))"), eval(env, "(reverse *LIST*)"));
+    }
+
+    @Test 
+    public void testC() {
+        Env env = defaultEnv();
+        assertEquals(read("1"), eval(env, "(C 1 1)"));
+        assertEquals(read("2"), eval(env, "(C 2 1)"));
+        assertEquals(read("1"), eval(env, "(C 2 2)"));
+        assertEquals(read("3"), eval(env, "(C 3 1)"));
+        assertEquals(read("3"), eval(env, "(C 3 2)"));
+        assertEquals(read("1"), eval(env, "(C 3 3)"));
+
     }
 
     @Test 

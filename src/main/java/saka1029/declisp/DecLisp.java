@@ -1068,6 +1068,38 @@ public class DecLisp {
         });
     }
 
+    static int combination(int n, int r, Procedure callback) {
+        if (n < 0) throw new DecLispException("must 0 <= n");
+        if (r < 0 || r > n) throw new DecLispException("must 0 <= r <= n");
+        Expr[] array = new Expr[n];
+        var obj = new Object () {
+            int count = 0;
+            void solve(int index, int start) {
+                if (index >= r) {
+                    callback.apply(list(list(Arrays.copyOfRange(array, 0, r))));
+                    ++count;
+                } else {
+                    for (int i = start; i < n; ++i) {
+                        array[index] = dec(i);
+                        solve(index + 1, i + 1);
+                    }
+                }
+            }
+        };
+        obj.solve(0, 0);
+        return obj.count;
+    }
+
+    static {
+        ENV.define(sym("combination"), (Procedure) args -> {
+            int n = toInt(dec(car(args)));
+            int r = toInt(dec(car(cdr(args))));
+            Procedure p = procedure(car(cdr(cdr(args))));
+            int count = combination(n, r, p);
+            return dec(count);
+        });
+    }
+
     public static Env defaultEnv() {
         return ENV;
     }
