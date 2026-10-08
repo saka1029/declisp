@@ -75,17 +75,25 @@ public class DecLisp {
             else
                 return Nil.NIL;
         }, VT.special, "then [else]", "条件が真ならthenを評価し、そうでなければelseを評価する。");
-        ENV.define(sym("define"), (Applicable) (args, e) -> {
-            Closure closure = null;
-            return car(args) instanceof Cons head
-                ? e.define(symbol(head.car()), closure = (Closure)cons(LAMBDA, cons(head.cdr(), cdr(args))).eval(e),
-                    VT.procedure, closure.parms().toString(), closure.toString())
-                : car(cdr(args)) instanceof Cons && car(car(cdr(args))).equals(LAMBDA)
-                    ? e.define(symbol(car(args)), closure = (Closure)car(cdr(args)).eval(e),
-                        VT.procedure, closure.parms().toString(), closure.toString())
-                    : e.define(symbol(car(args)), car(cdr(args)).eval(e),
-                        VT.variable, "", "");
-        }, VT.special, "グローバル変数名 値", "グローバル変数を定義する。");
+    }
+
+    static Expr define(Expr args, Env e) {
+        if (car(args) instanceof Cons head) {
+            Closure  closure = (Closure)cons(LAMBDA, cons(head.cdr(), cdr(args))).eval(e);
+            return e.define(symbol(head.car()), closure,
+                VT.procedure, closure.parms().toString(), closure.toString());
+        } else if(car(cdr(args)) instanceof Cons body && car(body).equals(LAMBDA)) {
+            Closure closure = (Closure)body.eval(e);
+            return e.define(symbol(car(args)), closure,
+                VT.procedure, closure.parms().toString(), closure.toString());
+        } else
+            return e.define(symbol(car(args)), car(cdr(args)).eval(e),
+                VT.variable, "", "");
+    };
+
+    static {
+        ENV.define(sym("define"), (Applicable) (args, e) -> define(args, e),
+            VT.special, "グローバル変数名 値", "グローバル変数を定義する。");
         ENV.define(sym("help"), (Applicable) (args, e) -> {
             String key = args instanceof Cons c ? sym(car(c)).toLowerCase() : "";
             for (Help h : e.sortedHelp())
