@@ -764,6 +764,7 @@ public class DecLisp {
                 .toArray(Expr[]::new));
         }, VT.procedure, "最大値",
             "最大値までの素数列を返します。");
+
         ENV.define(sym("factor"), (Procedure) args -> {
             BigInteger num = bigInt(car(args)).abs();
             if (num.equals(BigInteger.ZERO))
@@ -789,6 +790,7 @@ public class DecLisp {
             return list(result);
         },
         VT.procedure, "整数", "整数の素因数を返します。");
+
         ENV.define(sym("divisor"), (Procedure) args -> {
             // public static BigDecimal[] divisor(BigDecimal[] decs) {
             BigInteger i = bigInt(car(args)).abs();
@@ -805,6 +807,24 @@ public class DecLisp {
             }
             return list(set.stream().sorted().map(j -> (Expr)dec(bigDec(j))).toList());
         }, VT.procedure, "整数", "整数の約数を列挙します。");
+    }
+
+    static {
+        ENV.define(sym("pascal"), (Procedure) args -> {
+            int n = toInt(dec(car(args)));
+            if (n < 0)
+                throw new DecLispException("must >= 0 but '%d'", n);
+            List<Expr> result = new ArrayList<>();
+            result.add(dec(1));
+            BigInteger num = BigInteger.ONE, den = BigInteger.ONE;
+            for (int i = 1; i <= n; ++i) {
+                num = num.multiply(BigInteger.valueOf(n + 1 - i));
+                den = den.multiply(BigInteger.valueOf(i));
+                result.add(dec(bigDec(num.divide(den))));
+            }
+            return list(result);
+
+        }, VT.procedure, "段数", "Pascalの三角形のn段目を求める。");
     }
 
     static BigDecimal permutation(BigDecimal n, BigDecimal r) {

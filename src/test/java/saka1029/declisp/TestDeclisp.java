@@ -731,6 +731,15 @@ public class TestDeclisp {
     }
 
     @Test 
+    public void testPascal() {
+        Env env = defaultEnv();
+        assertEquals(read("(1)"), eval(env, "(pascal 0)"));
+        assertEquals(read("(1 1)"), eval(env, "(pascal 1)"));
+        assertEquals(read("(1 2 1)"), eval(env, "(pascal 2)"));
+        assertEquals(read("(1 3 3 1)"), eval(env, "(pascal 3)"));
+    }
+
+    @Test 
     public void testPolynomialAdd() {
         // (x²+2x+1)+(x+1) = x²+3x+2
         Expr[] a = {dec(1), dec(2), dec(1)};
