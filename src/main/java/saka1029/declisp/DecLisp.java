@@ -569,13 +569,13 @@ public class DecLisp {
         ENV.define(sym("p%"), (Procedure) args -> polynomial(args, POLYNOMIAL_MULTIPLY_UNIT, POLYNOMIAL_MODULO),
         VT.procedure, "多項式...", "多項式を除算した剰余を求める。(多項式=(1 2 3)=x^2+2x+3)");
         ENV.define(sym("p="), (Procedure) args -> {
-            Expr[] poly = car(args).array();
+            Expr[] poly = car(cdr(args)).array();
             BigDecimal result = BigDecimal.ZERO;
-            BigDecimal value = dec(car(cdr(args)));
+            BigDecimal value = dec(car(args));
             for (Expr k : poly)
                 result = result.multiply(value, MC).add(dec(k), MC);
             return dec(result);
-        }, VT.procedure, "多項式 値", "多項式に値を代入した結果を返す。(多項式=(1 2 3)=x^2+2x+3)");
+        }, VT.procedure, "値 多項式", "多項式に値を代入した結果を返す。(多項式=(1 2 3)=x^2+2x+3)");
     }
 
     static LocalDate date(Expr e) {
