@@ -568,6 +568,17 @@ public class DecLisp {
         VT.procedure, "多項式...", "多項式を除算する。(多項式=(1 2 3)=x^2+2x+3)");
         ENV.define(sym("p%"), (Procedure) args -> polynomial(args, POLYNOMIAL_MULTIPLY_UNIT, POLYNOMIAL_MODULO),
         VT.procedure, "多項式...", "多項式を除算した剰余を求める。(多項式=(1 2 3)=x^2+2x+3)");
+        ENV.define(sym("p^"), (Procedure) args -> {
+            int pow = toInt(dec(car(cdr(args))));
+            if (pow < 0)
+                throw new DecLispException("べき数 < 0");
+            Expr[] poly = car(args).array();
+            Expr[] result = new Expr[] {dec(BigDecimal.ONE)};
+            for (int i = 0; i < pow; ++i)
+                result = POLYNOMIAL_MULTIPLY.apply(result, poly);
+            return list(result);
+        }, VT.procedure, "多項式 べき数", "多項式をべき乗する。");
+
         ENV.define(sym("p="), (Procedure) args -> {
             Expr[] poly = car(cdr(args)).array();
             BigDecimal result = BigDecimal.ZERO;

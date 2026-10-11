@@ -827,6 +827,10 @@ public class TestDeclisp {
         assertEquals(read("(1 -2)"), eval(env, "(p/ '(1 -1 -6) '(1 1))"));
         assertEquals(read("(-4)"), eval(env, "(p% '(1 -1 -6) '(1 1))"));
         assertEquals(read("(1 -1 -6)"), eval(env, "(p+ (p* '(1 1) '(1 -2)) '(-4))"));
+        assertEquals(read("(1)"), eval(env, "(p^ '(1 1) 0)"));
+        assertEquals(read("(1 1)"), eval(env, "(p^ '(1 1) 1)"));
+        assertEquals(read("(1 2 1)"), eval(env, "(p^ '(1 1) 2)"));
+        assertEquals(read("(1 3 3 1)"), eval(env, "(p^ '(1 1) 3)"));
     }
 
     @Test
