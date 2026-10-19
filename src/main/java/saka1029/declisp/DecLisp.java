@@ -461,13 +461,13 @@ public class DecLisp {
     static {
         ENV.define(sym("sum"), (Procedure) args -> {
             BigDecimal result = BigDecimal.ZERO;
-            for (Expr a : args)
+            for (Expr a : car(args))
                 result = result.add(dec(a), MC);
             return dec(result);
         });
         ENV.define(sym("count"), (Procedure) args -> {
             int result = 0;
-            for (Expr _ : args)
+            for (Expr _ : car(args))
                 ++result;
             return dec(result);
         });
