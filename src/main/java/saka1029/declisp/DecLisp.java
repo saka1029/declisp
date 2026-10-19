@@ -459,6 +459,18 @@ public class DecLisp {
     }
 
     static {
+        ENV.define(sym("sum"), (Procedure) args -> {
+            BigDecimal result = BigDecimal.ZERO;
+            for (Expr a : args)
+                result = result.add(dec(a), MC);
+            return dec(result);
+        });
+        ENV.define(sym("count"), (Procedure) args -> {
+            int result = 0;
+            for (Expr _ : args)
+                ++result;
+            return dec(result);
+        });
         ENV.define(sym("range"), (Procedure) args -> {
             BigDecimal[] a = args.stream().map(x -> dec(x)).toArray(BigDecimal[]::new);
             return switch (a.length) {
