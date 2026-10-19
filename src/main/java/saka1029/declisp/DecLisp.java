@@ -464,13 +464,13 @@ public class DecLisp {
             for (Expr a : car(args))
                 result = result.add(dec(a), MC);
             return dec(result);
-        });
+        }, VT.procedure, "数値リスト", "数値リストの合計を求める。");
         ENV.define(sym("count"), (Procedure) args -> {
             int result = 0;
             for (Expr _ : car(args))
                 ++result;
             return dec(result);
-        });
+        }, VT.procedure, "リスト", "リストの要素数を求める。");
         ENV.define(sym("range"), (Procedure) args -> {
             BigDecimal[] a = args.stream().map(x -> dec(x)).toArray(BigDecimal[]::new);
             return switch (a.length) {
