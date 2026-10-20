@@ -267,10 +267,15 @@ public class DecLisp {
                 throw new DecLispException("division by 0");
             return dec(dec(x).remainder(dec(y), MC));
         }), VT.procedure, "数...", "剰余を求める。");
-        ENV.define(sym("pow"), (Procedure) args -> insertArith(args, dec(1), (x, y) -> dec(pow(dec(x), dec(y), MC))),
-            VT.procedure, "数...", "べき乗の計算をする。(左結合)");
+        ENV.define(sym("pow"), (Procedure) args -> {
+            Expr[] a = args.array();
+            BigDecimal result = BigDecimal.ONE;
+            for (int i = a.length - 1; i >= 0; --i)
+                result = pow(dec(a[i]), result, MC);
+            return dec(result);
+        }, VT.procedure, "数...", "べき乗の計算をする。(右結合)");
         ENV.define(sym("^"), ENV.get(sym("pow")),
-            VT.procedure, "数...", "べき乗の計算をする。(左結合)");
+            VT.procedure, "数...", "べき乗の計算をする。(右結合)");
     }
 
     static {
