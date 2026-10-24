@@ -476,6 +476,8 @@ public class DecLisp {
                 ++result;
             return dec(result);
         }, VT.procedure, "リスト", "リストの要素数を求める。");
+        ENV.define(sym("length"), (Procedure) args -> dec(sym(car(args)).length()),
+            VT.procedure, "シンボル", "シンボルの長さを求める。");
         ENV.define(sym("range"), (Procedure) args -> {
             BigDecimal[] a = args.stream().map(x -> dec(x)).toArray(BigDecimal[]::new);
             return switch (a.length) {
