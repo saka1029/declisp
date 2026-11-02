@@ -754,7 +754,7 @@ public class DecLisp {
     }
 
     static {
-        ENV.define(sym("prime"), (Procedure) args -> {
+        ENV.define(sym("isprime"), (Procedure) args -> {
             BigInteger i = bigInt(car(args));
             if (i.compareTo(BigInteger.TWO) < 0)
                 return Bool.F;

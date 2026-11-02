@@ -559,7 +559,7 @@ public class TestDeclisp {
                 (solve
                     (var x (range 3))
                     (var y (range 2))
-                    (rule (isPrime (+ x y)))
+                    (rule (isprime (+ x y)))
                 )
                 """));
         assertEquals(read("((a b c) (2 9 1))"),
@@ -631,20 +631,20 @@ public class TestDeclisp {
     @Test 
     public void testIsPrime() {
         Env env = defaultEnv();
-        assertEquals(Bool.F, eval(env, "(isPrime -2)"));
-        assertEquals(Bool.F, eval(env, "(isPrime -1)"));
-        assertEquals(Bool.F, eval(env, "(isPrime 0)"));
-        assertEquals(Bool.F, eval(env, "(isPrime 1)"));
-        assertEquals(Bool.T, eval(env, "(isPrime 2)"));
-        assertEquals(Bool.T, eval(env, "(isPrime 3)"));
-        assertEquals(Bool.F, eval(env, "(isPrime 4)"));
-        assertEquals(Bool.T, eval(env, "(isPrime 5)"));
-        assertEquals(Bool.F, eval(env, "(isPrime 6)"));
-        assertEquals(Bool.T, eval(env, "(isPrime 7)"));
-        assertEquals(Bool.F, eval(env, "(isPrime 8)"));
-        assertEquals(Bool.F, eval(env, "(isPrime 9)"));
-        assertEquals(Bool.F, eval(env, "(isPrime 10)"));
-        assertEquals(Bool.T, eval(env, "(isPrime 11)"));
+        assertEquals(Bool.F, eval(env, "(isprime -2)"));
+        assertEquals(Bool.F, eval(env, "(isprime -1)"));
+        assertEquals(Bool.F, eval(env, "(isprime 0)"));
+        assertEquals(Bool.F, eval(env, "(isprime 1)"));
+        assertEquals(Bool.T, eval(env, "(isprime 2)"));
+        assertEquals(Bool.T, eval(env, "(isprime 3)"));
+        assertEquals(Bool.F, eval(env, "(isprime 4)"));
+        assertEquals(Bool.T, eval(env, "(isprime 5)"));
+        assertEquals(Bool.F, eval(env, "(isprime 6)"));
+        assertEquals(Bool.T, eval(env, "(isprime 7)"));
+        assertEquals(Bool.F, eval(env, "(isprime 8)"));
+        assertEquals(Bool.F, eval(env, "(isprime 9)"));
+        assertEquals(Bool.F, eval(env, "(isprime 10)"));
+        assertEquals(Bool.T, eval(env, "(isprime 11)"));
     }
 
     @Test 
